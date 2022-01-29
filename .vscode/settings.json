@@ -1,0 +1,17 @@
+{
+  "[go]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+    "editor.defaultFormatter": "golang.go",
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": false
+  },
+  "go.formatTool": "goimports",
+  "go.toolsEnvVars": {
+    "GOOS": "linux"
+  },
+  "go.toolsManagement.autoUpdate": true,
+  "go.useLanguageServer": true
+}
