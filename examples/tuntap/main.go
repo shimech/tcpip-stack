@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/shimech/tcpip-stack/pkg/tuntap"
+	"github.com/shimech/tcpip-stack/pkg/raw/tuntap"
 )
 
 func main() {
