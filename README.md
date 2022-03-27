@@ -1,5 +1,12 @@
 # TCP/IP Protocol Stack
 
+## How to Run
+
+```shell
+$ docker-compose up -d
+$ docker-compose exec tcpip-stack go run <path/to/main.go>
+```
+
 ## References
 
 - [pandax381/lectcp](https://github.com/pandax381/lectcp)
