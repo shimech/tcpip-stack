@@ -7,21 +7,21 @@ import (
 	"github.com/shimech/tcpip-stack/pkg/net"
 )
 
-type header struct {
+type Header struct {
 	Dst  Address
 	Src  Address
 	Type net.EthernetType
 }
 
-type frame struct {
-	header
+type Frame struct {
+	Header
 	payload []byte
 }
 
-func parse(data []byte) (*frame, error) {
-	frame := frame{}
+func parse(data []byte) (*Frame, error) {
+	frame := Frame{}
 	buf := bytes.NewBuffer(data)
-	if err := binary.Read(buf, binary.BigEndian, &frame.header); err != nil {
+	if err := binary.Read(buf, binary.BigEndian, &frame.Header); err != nil {
 		return nil, err
 	}
 	frame.payload = buf.Bytes()

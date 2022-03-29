@@ -94,7 +94,7 @@ func (d *Device) RxHandler(data []byte, callback net.LinkDeviceCallbackHandler) 
 }
 
 func (d *Device) Tx(Type net.EthernetType, data []byte, dst []byte) error {
-	hdr := header{}
+	hdr := Header{}
 	copy(hdr.Dst[:], dst)
 	copy(hdr.Src[:], d.addr[:])
 	hdr.Type = Type
