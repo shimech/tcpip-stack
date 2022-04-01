@@ -18,23 +18,23 @@ func NewPFPacket(name string) (*PFPacket, error) {
 	}, nil
 }
 
-func (p *PFPacket) Name() string {
+func (p PFPacket) Name() string {
 	return p.name
 }
 
-func (p *PFPacket) Address() []byte {
+func (p PFPacket) Address() []byte {
 	addr, _ := getAddress(p.name)
 	return addr[:6]
 }
 
-func (p *PFPacket) Read(b []byte) (int, error) {
+func (p PFPacket) Read(b []byte) (int, error) {
 	return syscall.Read(p.fd, b)
 }
 
-func (p *PFPacket) Write(b []byte) (int, error) {
+func (p PFPacket) Write(b []byte) (int, error) {
 	return syscall.Write(p.fd, b)
 }
 
-func (p *PFPacket) Close() error {
+func (p PFPacket) Close() error {
 	return syscall.Close(p.fd)
 }

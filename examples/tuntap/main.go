@@ -11,7 +11,7 @@ import (
 func main() {
 	name := flag.String("name", "", "device name")
 	flag.Parse()
-	tap, err := tuntap.NewTap(*name)
+	tap, err := tuntap.NewTAP(*name)
 	if err != nil {
 		panic(err)
 	}

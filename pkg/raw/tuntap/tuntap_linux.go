@@ -12,7 +12,7 @@ import (
 
 const cloneDevice = "/dev/net/tun"
 
-func openTap(name string) (string, *os.File, error) {
+func openTAP(name string) (string, *os.File, error) {
 	if len(name) >= syscall.IFNAMSIZ {
 		return "", nil, fmt.Errorf("name is too long")
 	}

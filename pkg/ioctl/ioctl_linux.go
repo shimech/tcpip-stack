@@ -60,7 +60,7 @@ func SIOCSIFFLAGS(name string, flags uint16) error {
 	return nil
 }
 
-type sockaddr struct {
+type Sockaddr struct {
 	family uint16
 	addr   [14]byte
 }
@@ -73,7 +73,7 @@ func SIOCGIFHWADDR(name string) ([]byte, error) {
 	defer syscall.Close(soc)
 	ifreq := struct {
 		name [syscall.IFNAMSIZ]byte
-		addr sockaddr
+		addr Sockaddr
 		_pad [8]byte
 	}{}
 	copy(ifreq.name[:syscall.IFNAMSIZ-1], name)

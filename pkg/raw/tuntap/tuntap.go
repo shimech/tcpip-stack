@@ -4,27 +4,27 @@ import (
 	"io"
 )
 
-type Tap struct {
+type TAP struct {
 	io.ReadWriteCloser
 	name string
 }
 
-func NewTap(name string) (*Tap, error) {
-	n, f, err := openTap(name)
+func NewTAP(name string) (*TAP, error) {
+	n, f, err := openTAP(name)
 	if err != nil {
 		return nil, err
 	}
-	return &Tap{
+	return &TAP{
 		ReadWriteCloser: f,
 		name:            n,
 	}, nil
 }
 
-func (t *Tap) Address() []byte {
+func (t TAP) Address() []byte {
 	addr, _ := getAddress(t.name)
 	return addr[:6]
 }
 
-func (t *Tap) Name() string {
+func (t TAP) Name() string {
 	return t.name
 }
