@@ -4,8 +4,8 @@ type HardwareType uint16
 
 const HardwareTypeEthernet = 0x0001
 
-func (t *HardwareType) String() string {
-	switch *t {
+func (t HardwareType) String() string {
+	switch t {
 	case HardwareTypeEthernet:
 		return "Ethernet"
 	default:
@@ -21,8 +21,8 @@ const (
 	EthernetTypeIPv6 EthernetType = 0x86dd
 )
 
-func (t *EthernetType) String() string {
-	switch *t {
+func (t EthernetType) String() string {
+	switch t {
 	case EthernetTypeIP:
 		return "IP"
 	case EthernetTypeARP:
