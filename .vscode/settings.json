@@ -1,0 +1,13 @@
+{
+  "[go]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+    "editor.insertSpaces": false,
+    "editor.suggest.snippetsPreventQuickSuggestions": false
+  },
+  "editor.formatOnSave": true,
+  "go.formatTool": "goimports",
+  "go.useLanguageServer": true,
+  "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
+}

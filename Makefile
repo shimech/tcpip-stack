@@ -17,3 +17,8 @@ attach:
 .PHONY: status
 status:
 	docker compose ps
+
+.PHONY: step0
+step0:
+	@docker compose exec tcpip-stack go run test/step0/main.go
+
