@@ -133,6 +133,6 @@ func (dd *DummyDevice) Transmit(type_ uint16, data []uint8, len int, dst *any) e
 }
 
 func DummyISR(irq os.Signal, id any) error {
-	util.Debugf("irq=%u, dev=%s", irq, id.(net.Device).Name())
+	util.Debugf("irq=%d, dev=%s", irq, id.(net.Device).Name())
 	return nil
 }

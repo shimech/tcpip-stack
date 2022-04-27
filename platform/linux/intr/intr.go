@@ -3,6 +3,7 @@ package intr
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"syscall"
 
 	"github.com/shimech/tcpip-stack/util"
@@ -42,7 +43,7 @@ func RequestIRQ(
 		dev:     dev,
 	}
 	irqs = entry
-	sigmask <- irq
+	signal.Notify(sigmask, irq)
 	util.Debugf("registered: irq=%d, name=%s", irq, name)
 	return nil
 }
@@ -52,39 +53,42 @@ func RaiseIRQ(irq os.Signal) {
 }
 
 func Thread() {
-	terminate := make(chan bool, 1)
+	terminate := false
 
 	util.Debugf("start...")
-	go func() {
-		for {
-			sig := <-sigmask
-			switch sig {
-			case syscall.SIGHUP:
-				terminate <- true
-				break
-			default:
-				for entry := irqs; entry != nil; entry = entry.next {
-					if entry.irq == sig {
-						util.Debugf("irq=%d, name=%s", entry.irq, entry.name)
-						entry.handler(entry.irq, entry.dev)
-					}
+	for {
+		sig := <-sigmask
+		switch sig {
+		case syscall.SIGHUP:
+			terminate = true
+			break
+		default:
+			for entry := irqs; entry != nil; entry = entry.next {
+				if entry.irq == sig {
+					util.Debugf("irq=%d, name=%s", entry.irq, entry.name)
+					entry.handler(entry.irq, entry.dev)
 				}
-				break
 			}
+			break
 		}
-	}()
+		if terminate {
+			break
+		}
+	}
 
-	<-terminate
 	util.Debugf("terminated")
 }
 
 func Run() error {
+	go Thread()
 	return nil
 }
 
 func Shutdown() {
+	sigmask <- syscall.SIGHUP
 }
 
 func Init() error {
+	signal.Notify(sigmask, syscall.SIGHUP)
 	return nil
 }
