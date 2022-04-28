@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/shimech/tcpip-stack/driver"
+	"github.com/shimech/tcpip-stack/driver/dummy"
 	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/test"
 	"github.com/shimech/tcpip-stack/util"
@@ -18,7 +18,7 @@ func main() {
 		return
 	}
 
-	dd := driver.NewDummyDevice()
+	d := dummy.NewDevice()
 
 	if err := net.Run(); err != nil {
 		util.Errorf("net.Run() failure")
@@ -30,7 +30,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := net.Output(dd, 0x0800, test.TestData(), len(test.TestData()), nil); err != nil {
+			if err := net.Output(d, 0x0800, test.TestData(), len(test.TestData()), nil); err != nil {
 				util.Errorf("net.Output() failure")
 				break
 			}
