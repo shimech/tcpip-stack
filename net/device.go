@@ -16,7 +16,6 @@ type Device interface {
 	Addr() uint8
 	Peer() uint8
 	Broadcast() uint8
-	Priv() *any
 	IsUP() uint16
 	State() string
 	Open() error

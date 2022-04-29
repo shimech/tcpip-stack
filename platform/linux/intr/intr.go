@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/shimech/tcpip-stack/util"
+	"github.com/shimech/tcpip-stack/util/log"
 )
 
 const (
@@ -16,7 +16,8 @@ const (
 
 var irqs *IRQEntry
 var sigs = make(chan os.Signal)
-var terminate = make(chan bool)
+var raise = make(chan struct{})
+var terminate = make(chan struct{})
 
 func RequestIRQ(
 	irq os.Signal,
@@ -24,12 +25,12 @@ func RequestIRQ(
 	flags int,
 	name string,
 	dev any) error {
-	util.Debugf("irq=%d, flags=%d, name=%s", irq, flags, name)
+	log.Debugf("irq=%d, flags=%d, name=%s", irq, flags, name)
 	for entry := irqs; entry != nil; entry = entry.next {
 		if entry.irq == irq {
 			if entry.flags^INTR_IRQ_SHARED != 0 || flags^INTR_IRQ_SHARED != 0 {
 				err := fmt.Errorf("conflicts with already registered IRQs")
-				util.Errorf(err.Error())
+				log.Errorf(err.Error())
 				return err
 			}
 		}
@@ -45,7 +46,7 @@ func RequestIRQ(
 	}
 	irqs = entry
 	signal.Notify(sigs, irq)
-	util.Debugf("registered: irq=%d, name=%s", irq, name)
+	log.Debugf("registered: irq=%d, name=%s", irq, name)
 	return nil
 }
 
@@ -56,7 +57,8 @@ func RaiseIRQ(irq os.Signal) {
 func Thread() {
 	term := false
 
-	util.Debugf("start...")
+	log.Debugf("start...")
+	raise <- struct{}{}
 	for {
 		sig := <-sigs
 		switch sig {
@@ -66,7 +68,7 @@ func Thread() {
 		default:
 			for entry := irqs; entry != nil; entry = entry.next {
 				if entry.irq == sig {
-					util.Debugf("irq=%d, name=%s", entry.irq, entry.name)
+					log.Debugf("irq=%d, name=%s", entry.irq, entry.name)
 					entry.handler(entry.irq, entry.dev)
 				}
 			}
@@ -77,12 +79,13 @@ func Thread() {
 		}
 	}
 
-	util.Debugf("terminated")
-	terminate <- term
+	log.Debugf("terminated")
+	terminate <- struct{}{}
 }
 
 func Run() error {
 	go Thread()
+	<-raise
 	return nil
 }
 

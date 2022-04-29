@@ -9,19 +9,19 @@ import (
 	"github.com/shimech/tcpip-stack/driver/dummy"
 	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/test"
-	"github.com/shimech/tcpip-stack/util"
+	"github.com/shimech/tcpip-stack/util/log"
 )
 
 func main() {
 	if err := net.Init(); err != nil {
-		util.Errorf("net.Init() failure")
+		log.Errorf("net.Init() failure")
 		return
 	}
 
 	d := dummy.NewDevice()
 
 	if err := net.Run(); err != nil {
-		util.Errorf("net.Run() failure")
+		log.Errorf("net.Run() failure")
 		return
 	}
 
@@ -31,7 +31,7 @@ func main() {
 	go func() {
 		for {
 			if err := net.Output(d, 0x0800, test.TestData(), len(test.TestData()), nil); err != nil {
-				util.Errorf("net.Output() failure")
+				log.Errorf("net.Output() failure")
 				break
 			}
 			time.Sleep(1 * time.Second)

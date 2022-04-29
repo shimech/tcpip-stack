@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/shimech/tcpip-stack/test"
-	"github.com/shimech/tcpip-stack/util"
+	"github.com/shimech/tcpip-stack/util/log"
 )
 
 func main() {
-	util.Debugf("Hello, World!")
-	util.Debugdump(test.TestData(), len(test.TestData()))
+	log.Debugf("Hello, World!")
+	log.Debugdump(test.TestData(), len(test.TestData()))
 }
