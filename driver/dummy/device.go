@@ -12,7 +12,7 @@ type Device struct {
 	next      *net.Device
 	index     int
 	name      string
-	type_     uint16
+	dtype     net.DeviceType
 	mtu       uint16
 	flags     uint16
 	hlen      uint16
@@ -29,7 +29,7 @@ const (
 
 func NewDevice() *Device {
 	d := &Device{
-		type_: net.NET_DEVICE_TYPE_DUMMY,
+		dtype: net.NET_DEVICE_TYPE_DUMMY,
 		mtu:   DUMMY_MTU,
 		hlen:  0,
 		alen:  0,
@@ -64,8 +64,8 @@ func (d *Device) SetName(n string) {
 	d.name = n
 }
 
-func (d *Device) Type() uint16 {
-	return d.type_
+func (d *Device) Type() net.DeviceType {
+	return d.dtype
 }
 
 func (d *Device) MTU() uint16 {
@@ -116,8 +116,8 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(type_ uint16, data []uint8, len int, dst *any) error {
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, type_, len)
+func (d *Device) Transmit(ptype uint16, data []uint8, len int, dst *any) error {
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, ptype, len)
 	log.Debugdump(data, len)
 	// drop data
 	intr.RaiseIRQ(DUMMY_IRQ)

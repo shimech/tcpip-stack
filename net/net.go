@@ -8,9 +8,6 @@ import (
 )
 
 const (
-	NET_DEVICE_TYPE_DUMMY    = 0x0000
-	NET_DEVICE_TYPE_LOOPBACK = 0x0001
-
 	NET_DEVICE_FLAG_LOOPBACK = 0x0010
 )
 
@@ -63,7 +60,7 @@ func Close(d Device) error {
 	return nil
 }
 
-func Output(d Device, type_ uint16, data []uint8, len int, dst *any) error {
+func Output(d Device, ptype uint16, data []uint8, len int, dst *any) error {
 	if d.IsUP() == 0 {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
@@ -76,9 +73,9 @@ func Output(d Device, type_ uint16, data []uint8, len int, dst *any) error {
 		return err
 	}
 
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), type_, len)
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), ptype, len)
 	log.Debugdump(data, len)
-	if err := d.Transmit(type_, data, len, dst); err != nil {
+	if err := d.Transmit(ptype, data, len, dst); err != nil {
 		err := fmt.Errorf("device transmit failure, dev=%s, len=%d", d.Name(), len)
 		log.Errorf(err.Error())
 		return err
@@ -86,8 +83,8 @@ func Output(d Device, type_ uint16, data []uint8, len int, dst *any) error {
 	return nil
 }
 
-func InputHandler(d Device, type_ uint16, data []uint8, len int) error {
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), type_, len)
+func InputHandler(d Device, ptype uint16, data []uint8, len int) error {
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), ptype, len)
 	log.Debugdump(data, len)
 	return nil
 }

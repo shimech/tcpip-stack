@@ -7,7 +7,7 @@ type Device interface {
 	SetIndex(i int)
 	Name() string
 	SetName(n string)
-	Type() uint16
+	Type() DeviceType
 	MTU() uint16
 	Flags() uint16
 	SetFlags(f uint16)
@@ -20,10 +20,17 @@ type Device interface {
 	State() string
 	Open() error
 	Close() error
-	Transmit(type_ uint16, data []uint8, len int, dst *any) error
+	Transmit(ptype uint16, data []uint8, len int, dst *any) error
 }
 
-const NET_DEVICE_FLAG_UP uint16 = 0x0001
+type DeviceType uint16
+
+const (
+	NET_DEVICE_FLAG_UP uint16 = 0x0001
+
+	NET_DEVICE_TYPE_DUMMY    = 0x0000
+	NET_DEVICE_TYPE_LOOPBACK = 0x0001
+)
 
 func IsUP(d Device) uint16 {
 	return d.Flags() & NET_DEVICE_FLAG_UP
