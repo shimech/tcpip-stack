@@ -26,7 +26,7 @@ func Init() error {
 }
 
 func InputHandler(ptype uint16, data []uint8, len int, d device.Device) error {
-	for p := protocol.Protocols; p != nil; p = p.Next {
+	for p := protocol.Head(); p != nil; p = p.Next {
 		if uint16(p.Type) == ptype {
 			pqe := protocol.NewQueueEntry(&d, len, data)
 			p.Queue.Push(pqe)
@@ -45,7 +45,7 @@ func Run() error {
 		return err
 	}
 	log.Debugf("open all devices...")
-	for d := device.Devices; d != nil; d = (*d).Next() {
+	for d := device.Head(); d != nil; d = (*d).Next() {
 		if err := device.Open(*d); err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func Run() error {
 
 func Shutdown() error {
 	log.Debugf("close all devices...")
-	for d := device.Devices; d != nil; d = (*d).Next() {
+	for d := device.Head(); d != nil; d = (*d).Next() {
 		if err := device.Close(*d); err != nil {
 			return err
 		}

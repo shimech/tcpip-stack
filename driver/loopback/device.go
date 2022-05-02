@@ -54,7 +54,7 @@ func NewDevice() *Device {
 		q:     queue.NewQueue(),
 	}
 	device.Register(d)
-	intr.RequestIRQ(LOOPBACK_IRQ, LoopbackISR, intr.INTR_IRQ_SHARED, d.name, d)
+	intr.RequestIRQ(LOOPBACK_IRQ, loopbackISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
 }
@@ -119,14 +119,6 @@ func (d *Device) Broadcast() uint8 {
 	return d.broadcast
 }
 
-func (d *Device) IsUP() uint16 {
-	return device.IsUP(d)
-}
-
-func (d *Device) State() string {
-	return device.State(d)
-}
-
 func (d *Device) Open() error {
 	return nil
 }
@@ -135,7 +127,7 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst *any) error {
+func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst any) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -156,7 +148,7 @@ func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst *any) error {
 	return nil
 }
 
-func LoopbackISR(irq os.Signal, id any) error {
+func loopbackISR(irq os.Signal, id any) error {
 	d, ok := id.(*Device)
 	if !ok {
 		return fmt.Errorf("fail cast")

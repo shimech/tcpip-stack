@@ -35,7 +35,7 @@ func NewDevice() *Device {
 		alen:  0,
 	}
 	device.Register(d)
-	intr.RequestIRQ(DUMMY_IRQ, DummyISR, intr.INTR_IRQ_SHARED, d.name, d)
+	intr.RequestIRQ(DUMMY_IRQ, dummyISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
 }
@@ -100,14 +100,6 @@ func (d *Device) Broadcast() uint8 {
 	return d.broadcast
 }
 
-func (d *Device) IsUP() uint16 {
-	return device.IsUP(d)
-}
-
-func (d *Device) State() string {
-	return device.State(d)
-}
-
 func (d *Device) Open() error {
 	return nil
 }
@@ -116,7 +108,7 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst *any) error {
+func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst any) error {
 	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, dtype, len)
 	log.Debugdump(data, len)
 	// drop data
@@ -124,7 +116,7 @@ func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst *any) error {
 	return nil
 }
 
-func DummyISR(irq os.Signal, id any) error {
+func dummyISR(irq os.Signal, id any) error {
 	log.Debugf("irq=%d, dev=%s", irq, id.(device.Device).Name())
 	return nil
 }

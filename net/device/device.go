@@ -22,11 +22,9 @@ type Device interface {
 	Addr() uint8
 	Peer() uint8
 	Broadcast() uint8
-	IsUP() uint16
-	State() string
 	Open() error
 	Close() error
-	Transmit(dtype uint16, data []uint8, len int, dst *any) error
+	Transmit(dtype uint16, data []uint8, len int, dst any) error
 }
 
 const (
@@ -38,33 +36,24 @@ const (
 	NET_DEVICE_FLAG_LOOPBACK = 0x0010
 )
 
-var Devices *Device
+var devices *Device
 var index = 0
 
-func IsUP(d Device) uint16 {
-	return d.Flags() & NET_DEVICE_FLAG_UP
-}
-
-func State(d Device) string {
-	if d.IsUP() > 0 {
-		return "up"
-	} else {
-		return "down"
-	}
+func Head() *Device {
+	return devices
 }
 
 func Register(d Device) {
 	d.SetIndex(index)
 	d.SetName(fmt.Sprintf("net%d", d.Index()))
-	d.SetNext(Devices)
-	Devices = &d
+	push(d)
 	log.Infof("registered, dev=%s, type=0x%04x", d.Name(), d.Type())
 
 	index += 1
 }
 
 func Open(d Device) error {
-	if d.IsUP() > 0 {
+	if isUP(d) > 0 {
 		err := fmt.Errorf("already opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -77,12 +66,12 @@ func Open(d Device) error {
 	}
 
 	d.SetFlags(d.Flags() | NET_DEVICE_FLAG_UP)
-	log.Infof("dev=%s, state=%s", d.Name(), d.State())
+	log.Infof("dev=%s, state=%s", d.Name(), state(d))
 	return nil
 }
 
 func Close(d Device) error {
-	if d.IsUP() == 0 {
+	if isUP(d) == 0 {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -95,12 +84,12 @@ func Close(d Device) error {
 	}
 
 	d.SetFlags(d.Flags() & ^NET_DEVICE_FLAG_UP)
-	log.Infof("dev=%s, state=%s", d.Name(), d.State())
+	log.Infof("dev=%s, state=%s", d.Name(), state(d))
 	return nil
 }
 
-func Output(d Device, dtype uint16, data []uint8, len int, dst *any) error {
-	if d.IsUP() == 0 {
+func Output(d Device, dtype uint16, data []uint8, len int, dst any) error {
+	if isUP(d) == 0 {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -120,4 +109,21 @@ func Output(d Device, dtype uint16, data []uint8, len int, dst *any) error {
 		return err
 	}
 	return nil
+}
+
+func isUP(d Device) uint16 {
+	return d.Flags() & NET_DEVICE_FLAG_UP
+}
+
+func state(d Device) string {
+	if isUP(d) > 0 {
+		return "up"
+	} else {
+		return "down"
+	}
+}
+
+func push(d Device) {
+	d.SetNext(devices)
+	devices = &d
 }

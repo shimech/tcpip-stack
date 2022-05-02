@@ -27,7 +27,7 @@ const (
 	NET_PROTOCOL_TYPE_IPV6 = 0x86dd
 )
 
-var Protocols *Protocol
+var protocols *Protocol
 
 func NewQueueEntry(d *device.Device, len int, data []uint8) *QueueEntry {
 	return &QueueEntry{
@@ -37,8 +37,12 @@ func NewQueueEntry(d *device.Device, len int, data []uint8) *QueueEntry {
 	}
 }
 
+func Head() *Protocol {
+	return protocols
+}
+
 func Register(ptype uint16, handler func(data []uint8, len int, d device.Device)) error {
-	for p := Protocols; p != nil; p = p.Next {
+	for p := protocols; p != nil; p = p.Next {
 		if ptype == p.Type {
 			err := fmt.Errorf("already registered, type=0x%04x", ptype)
 			log.Errorf(err.Error())
@@ -46,12 +50,16 @@ func Register(ptype uint16, handler func(data []uint8, len int, d device.Device)
 		}
 	}
 	p := &Protocol{
-		Next:    Protocols,
 		Type:    ptype,
 		Queue:   queue.NewQueue(),
 		handler: handler,
 	}
-	Protocols = p
+	push(p)
 	log.Infof("registered, type=0x%04x", ptype)
 	return nil
+}
+
+func push(p *Protocol) {
+	p.Next = protocols
+	protocols = p
 }
