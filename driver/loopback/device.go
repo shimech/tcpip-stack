@@ -8,16 +8,17 @@ import (
 	"syscall"
 
 	"github.com/shimech/tcpip-stack/net"
+	"github.com/shimech/tcpip-stack/net/device"
 	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 	"github.com/shimech/tcpip-stack/util/queue"
 )
 
 type Device struct {
-	next      *net.Device
+	next      *device.Device
 	index     int
 	name      string
-	dtype     net.DeviceType
+	dtype     uint16
 	mtu       uint16
 	flags     uint16
 	hlen      uint16
@@ -31,7 +32,7 @@ type Device struct {
 }
 
 type QueueEntry struct {
-	etype uint16
+	dtype uint16
 	len   int
 	data  []uint8
 }
@@ -44,26 +45,26 @@ const (
 
 func NewDevice() *Device {
 	d := &Device{
-		dtype: net.NET_DEVICE_TYPE_LOOPBACK,
+		dtype: device.NET_DEVICE_TYPE_LOOPBACK,
 		mtu:   LOOPBACK_MTU,
 		hlen:  0,
 		alen:  0,
-		flags: net.NET_DEVICE_FLAG_LOOPBACK,
+		flags: device.NET_DEVICE_FLAG_LOOPBACK,
 		irq:   LOOPBACK_IRQ,
 		q:     queue.NewQueue(),
 	}
-	net.Register(d)
+	device.Register(d)
 	intr.RequestIRQ(LOOPBACK_IRQ, LoopbackISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
 }
 
-func (d *Device) Next() *net.Device {
+func (d *Device) Next() *device.Device {
 	return d.next
 }
 
-func (d *Device) SetNext(_d *net.Device) {
-	d.next = _d
+func (d *Device) SetNext(n *device.Device) {
+	d.next = n
 }
 
 func (d *Device) Index() int {
@@ -82,7 +83,7 @@ func (d *Device) SetName(n string) {
 	d.name = n
 }
 
-func (d *Device) Type() net.DeviceType {
+func (d *Device) Type() uint16 {
 	return d.dtype
 }
 
@@ -119,11 +120,11 @@ func (d *Device) Broadcast() uint8 {
 }
 
 func (d *Device) IsUP() uint16 {
-	return net.IsUP(d)
+	return device.IsUP(d)
 }
 
 func (d *Device) State() string {
-	return net.State(d)
+	return device.State(d)
 }
 
 func (d *Device) Open() error {
@@ -134,7 +135,7 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(ptype uint16, data []uint8, len int, dst *any) error {
+func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst *any) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -145,12 +146,12 @@ func (d *Device) Transmit(ptype uint16, data []uint8, len int, dst *any) error {
 	}
 
 	entry := &QueueEntry{
-		etype: ptype,
+		dtype: dtype,
 		len:   len,
 		data:  data,
 	}
 	d.q.Push(entry)
-	log.Debugf("queue pushed (size:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, ptype, len)
+	log.Debugf("queue pushed (size:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, dtype, len)
 	intr.RaiseIRQ(d.irq)
 	return nil
 }
@@ -174,9 +175,9 @@ func LoopbackISR(irq os.Signal, id any) error {
 			return fmt.Errorf("fail cast")
 		}
 
-		log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, entry.etype, entry.len)
+		log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, entry.dtype, entry.len)
 		log.Debugdump(entry.data, entry.len)
-		net.InputHandler(d, entry.etype, entry.data, entry.len)
+		net.InputHandler(uint16(entry.dtype), entry.data, entry.len, d)
 	}
 	return nil
 }

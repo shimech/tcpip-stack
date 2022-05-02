@@ -9,6 +9,7 @@ import (
 	"github.com/shimech/tcpip-stack/driver/loopback"
 	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/net/device"
+	"github.com/shimech/tcpip-stack/net/protocol"
 	"github.com/shimech/tcpip-stack/test"
 	"github.com/shimech/tcpip-stack/util/log"
 )
@@ -31,7 +32,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := device.Output(d, 0x0800, test.TestData(), len(test.TestData()), nil); err != nil {
+			if err := device.Output(d, protocol.NET_PROTOCOL_TYPE_IP, test.TestData(), len(test.TestData()), nil); err != nil {
 				log.Errorf("device.Output() failure")
 				break
 			}

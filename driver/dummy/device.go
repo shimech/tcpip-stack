@@ -3,16 +3,16 @@ package dummy
 import (
 	"os"
 
-	"github.com/shimech/tcpip-stack/net"
+	"github.com/shimech/tcpip-stack/net/device"
 	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
 type Device struct {
-	next      *net.Device
+	next      *device.Device
 	index     int
 	name      string
-	dtype     net.DeviceType
+	dtype     uint16
 	mtu       uint16
 	flags     uint16
 	hlen      uint16
@@ -29,23 +29,23 @@ const (
 
 func NewDevice() *Device {
 	d := &Device{
-		dtype: net.NET_DEVICE_TYPE_DUMMY,
+		dtype: device.NET_DEVICE_TYPE_DUMMY,
 		mtu:   DUMMY_MTU,
 		hlen:  0,
 		alen:  0,
 	}
-	net.Register(d)
+	device.Register(d)
 	intr.RequestIRQ(DUMMY_IRQ, DummyISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
 }
 
-func (d *Device) Next() *net.Device {
+func (d *Device) Next() *device.Device {
 	return d.next
 }
 
-func (d *Device) SetNext(_d *net.Device) {
-	d.next = _d
+func (d *Device) SetNext(n *device.Device) {
+	d.next = n
 }
 
 func (d *Device) Index() int {
@@ -64,7 +64,7 @@ func (d *Device) SetName(n string) {
 	d.name = n
 }
 
-func (d *Device) Type() net.DeviceType {
+func (d *Device) Type() uint16 {
 	return d.dtype
 }
 
@@ -101,11 +101,11 @@ func (d *Device) Broadcast() uint8 {
 }
 
 func (d *Device) IsUP() uint16 {
-	return net.IsUP(d)
+	return device.IsUP(d)
 }
 
 func (d *Device) State() string {
-	return net.State(d)
+	return device.State(d)
 }
 
 func (d *Device) Open() error {
@@ -116,8 +116,8 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(ptype uint16, data []uint8, len int, dst *any) error {
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, ptype, len)
+func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst *any) error {
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, dtype, len)
 	log.Debugdump(data, len)
 	// drop data
 	intr.RaiseIRQ(DUMMY_IRQ)
@@ -125,6 +125,6 @@ func (d *Device) Transmit(ptype uint16, data []uint8, len int, dst *any) error {
 }
 
 func DummyISR(irq os.Signal, id any) error {
-	log.Debugf("irq=%d, dev=%s", irq, id.(net.Device).Name())
+	log.Debugf("irq=%d, dev=%s", irq, id.(device.Device).Name())
 	return nil
 }

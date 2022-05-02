@@ -16,8 +16,8 @@ const (
 
 var irqs *IRQEntry
 var sigs = make(chan os.Signal)
-var raise = make(chan struct{})
-var terminate = make(chan struct{})
+var raise = make(chan struct{}, 1)
+var terminate = make(chan struct{}, 1)
 
 func RequestIRQ(
 	irq os.Signal,
