@@ -52,6 +52,7 @@ func SoftIRQHandler() error {
 			}
 			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), entry.Device.Name(), p.Type, entry.Len)
 			log.Debugdump(entry.Data, entry.Len)
+			p.Handler(entry.Data, entry.Len, entry.Device)
 		}
 	}
 	return nil

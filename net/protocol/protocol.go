@@ -12,7 +12,7 @@ type Protocol struct {
 	Next    *Protocol
 	Type    uint16
 	Queue   *queue.Queue
-	handler func(data []uint8, len int, d device.Device)
+	Handler func(data []uint8, len int, d device.Device)
 }
 
 type QueueEntry struct {
@@ -52,7 +52,7 @@ func Register(ptype uint16, handler func(data []uint8, len int, d device.Device)
 	p := &Protocol{
 		Type:    ptype,
 		Queue:   queue.NewQueue(),
-		handler: handler,
+		Handler: handler,
 	}
 	push(p)
 	log.Infof("registered, type=0x%04x", ptype)
