@@ -32,7 +32,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := device.Output(d, protocol.NET_PROTOCOL_TYPE_IP, test.TestData, len(test.TestData), nil); err != nil {
+			if err := device.Output(d, protocol.NET_PROTOCOL_TYPE_IP, test.TestData, nil); err != nil {
 				log.Errorf("device.Output() failure")
 				break
 			}

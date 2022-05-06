@@ -59,7 +59,7 @@ func (q *Queue) Peek() any {
 	return q.head.data
 }
 
-func (q *Queue) forEach(f func(data any, args ...any), args ...any) {
+func (q *Queue) ForEach(f func(data any, args ...any), args ...any) {
 	if f == nil {
 		return
 	}

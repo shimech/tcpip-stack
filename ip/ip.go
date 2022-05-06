@@ -8,7 +8,7 @@ import (
 
 	"github.com/shimech/tcpip-stack/net/device"
 	"github.com/shimech/tcpip-stack/net/protocol"
-	"github.com/shimech/tcpip-stack/util/byte"
+	"github.com/shimech/tcpip-stack/util/byteops"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
@@ -90,20 +90,21 @@ func dump(data []uint8, len int) {
 	hlen := hl << 2
 	fmt.Fprintf(os.Stderr, "        vhl: 0x%02x [v: %d, hl: %d (%d)]\n", h.vhl, v, hl, hlen)
 	fmt.Fprintf(os.Stderr, "        tos: 0x%02x\n", h.tos)
-	total := byte.NtoH16(h.total)
+	total := byteops.NtoH16(h.total)
 	fmt.Fprintf(os.Stderr, "      total: %d (payload: %d)\n", total, total-uint16(hlen))
-	fmt.Fprintf(os.Stderr, "         id: %d\n", byte.NtoH16(h.id))
-	offset := byte.NtoH16(h.offset)
+	fmt.Fprintf(os.Stderr, "         id: %d\n", byteops.NtoH16(h.id))
+	offset := byteops.NtoH16(h.offset)
 	fmt.Fprintf(os.Stderr, "     offset: 0x%04x [flags=%x, offset=%d]\n", offset, (offset&0xe000)>>13, offset&0x1fff)
 	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.ttl)
 	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.protocol)
-	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byte.NtoH16(h.sum))
+	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.sum))
 	fmt.Fprintf(os.Stderr, "        src: %s\n", addrNtoP(h.src))
 	fmt.Fprintf(os.Stderr, "        dst: %s\n", addrNtoP(h.dst))
 }
 
-func input(data []uint8, len int, d device.Device) {
-	if len < IP_HDR_SIZE_MIN {
+func input(data []byte, d device.Device) {
+	size := len(data)
+	if size < IP_HDR_SIZE_MIN {
 		log.Errorf("too short")
 		return
 	}
@@ -115,18 +116,18 @@ func input(data []uint8, len int, d device.Device) {
 		return
 	}
 
-	if int(h.ihl()) > len {
+	if int(h.ihl()) > size {
 		log.Errorf("ihl > len")
 		return
 	}
 
-	total := byte.NtoH16(h.total)
-	if int(total) > len {
+	total := byteops.NtoH16(h.total)
+	if int(total) > size {
 		log.Errorf("tl > len")
 		return
 	}
 
-	offset := byte.NtoH16(h.offset)
+	offset := byteops.NtoH16(h.offset)
 	if offset&0x2000 > 0 || offset&0x1fff > 0 {
 		log.Errorf("fragments does not support")
 		return

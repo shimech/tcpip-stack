@@ -12,13 +12,12 @@ type Protocol struct {
 	Next    *Protocol
 	Type    uint16
 	Queue   *queue.Queue
-	Handler func(data []uint8, len int, d device.Device)
+	Handler func(data []byte, d device.Device)
 }
 
 type QueueEntry struct {
 	Device device.Device
-	Len    int
-	Data   []uint8
+	Data   []byte
 }
 
 const (
@@ -29,10 +28,9 @@ const (
 
 var protocols *Protocol
 
-func NewQueueEntry(d device.Device, len int, data []uint8) *QueueEntry {
+func NewQueueEntry(d device.Device, data []byte) *QueueEntry {
 	return &QueueEntry{
 		Device: d,
-		Len:    len,
 		Data:   data,
 	}
 }
@@ -41,7 +39,7 @@ func Head() *Protocol {
 	return protocols
 }
 
-func Register(ptype uint16, handler func(data []uint8, len int, d device.Device)) error {
+func Register(ptype uint16, handler func(data []byte, d device.Device)) error {
 	for p := protocols; p != nil; p = p.Next {
 		if ptype == p.Type {
 			err := fmt.Errorf("already registered, type=0x%04x", ptype)

@@ -37,8 +37,8 @@ func Debugf(format string, ap ...any) (int, error) {
 	return lprintf(os.Stderr, 'D', file, line, function.Name(), format, ap...)
 }
 
-func Debugdump(data []uint8, size int) {
-	hexdump(os.Stderr, data, size)
+func Debugdump(data []byte) {
+	hexdump(os.Stderr, data)
 }
 
 func lprintf(
@@ -71,7 +71,8 @@ func lprintf(
 	return result, nil
 }
 
-func hexdump(fp *os.File, data []uint8, size int) {
+func hexdump(fp *os.File, data []byte) {
+	size := len(data)
 	fmt.Fprintf(fp, "+------+-------------------------------------------------+------------------+\n")
 	for offset := 0; offset < size; offset += 16 {
 		fmt.Fprintf(fp, "| %04x | ", offset)

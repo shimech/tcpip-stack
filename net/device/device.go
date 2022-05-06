@@ -24,7 +24,7 @@ type Device interface {
 	Broadcast() uint8
 	Open() error
 	Close() error
-	Transmit(dtype uint16, data []uint8, len int, dst any) error
+	Transmit(dtype uint16, data []byte, dst any) error
 }
 
 const (
@@ -88,23 +88,24 @@ func Close(d Device) error {
 	return nil
 }
 
-func Output(d Device, dtype uint16, data []uint8, len int, dst any) error {
+func Output(d Device, dtype uint16, data []byte, dst any) error {
+	size := len(data)
 	if isUP(d) == 0 {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
 	}
 
-	if len > int(d.MTU()) {
-		err := fmt.Errorf("too long, dev=%s, mtu=%x, len=%d", d.Name(), d.MTU(), len)
+	if size > int(d.MTU()) {
+		err := fmt.Errorf("too long, dev=%s, mtu=%x, len=%d", d.Name(), d.MTU(), size)
 		log.Errorf(err.Error())
 		return err
 	}
 
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), dtype, len)
-	log.Debugdump(data, len)
-	if err := d.Transmit(dtype, data, len, dst); err != nil {
-		err := fmt.Errorf("device transmit failure, dev=%s, len=%d", d.Name(), len)
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), dtype, size)
+	log.Debugdump(data)
+	if err := d.Transmit(dtype, data, dst); err != nil {
+		err := fmt.Errorf("device transmit failure, dev=%s, len=%d", d.Name(), size)
 		log.Errorf(err.Error())
 		return err
 	}

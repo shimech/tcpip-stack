@@ -108,9 +108,9 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst any) error {
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, dtype, len)
-	log.Debugdump(data, len)
+func (d *Device) Transmit(dtype uint16, data []byte, dst any) error {
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, dtype, len(data))
+	log.Debugdump(data)
 	// drop data
 	intr.RaiseIRQ(DUMMY_IRQ)
 	return nil

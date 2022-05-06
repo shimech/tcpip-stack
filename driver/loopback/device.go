@@ -33,8 +33,7 @@ type Device struct {
 
 type QueueEntry struct {
 	dtype uint16
-	len   int
-	data  []uint8
+	data  []byte
 }
 
 const (
@@ -127,7 +126,7 @@ func (d *Device) Close() error {
 	return nil
 }
 
-func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst any) error {
+func (d *Device) Transmit(dtype uint16, data []byte, dst any) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -139,11 +138,10 @@ func (d *Device) Transmit(dtype uint16, data []uint8, len int, dst any) error {
 
 	entry := &QueueEntry{
 		dtype: dtype,
-		len:   len,
 		data:  data,
 	}
 	d.q.Push(entry)
-	log.Debugf("queue pushed (size:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, dtype, len)
+	log.Debugf("queue pushed (size:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, dtype, len(data))
 	intr.RaiseIRQ(d.irq)
 	return nil
 }
@@ -167,9 +165,9 @@ func loopbackISR(irq os.Signal, id any) error {
 			return fmt.Errorf("fail cast")
 		}
 
-		log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, entry.dtype, entry.len)
-		log.Debugdump(entry.data, entry.len)
-		net.InputHandler(uint16(entry.dtype), entry.data, entry.len, d)
+		log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, entry.dtype, len(entry.data))
+		log.Debugdump(entry.data)
+		net.InputHandler(uint16(entry.dtype), entry.data, d)
 	}
 	return nil
 }

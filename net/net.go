@@ -25,13 +25,13 @@ func Init() error {
 	return nil
 }
 
-func InputHandler(ptype uint16, data []uint8, len int, d device.Device) error {
+func InputHandler(ptype uint16, data []byte, d device.Device) error {
 	for p := protocol.Head(); p != nil; p = p.Next {
 		if uint16(p.Type) == ptype {
-			pqe := protocol.NewQueueEntry(d, len, data)
+			pqe := protocol.NewQueueEntry(d, data)
 			p.Queue.Push(pqe)
-			log.Debugf("queue pushed (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), d.Name(), ptype, len)
-			log.Debugdump(data, len)
+			log.Debugf("queue pushed (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), d.Name(), ptype, len(data))
+			log.Debugdump(data)
 			intr.RaiseIRQ(intr.INTR_IRQ_SOFTIRQ)
 			return nil
 		}
@@ -50,9 +50,9 @@ func SoftIRQHandler() error {
 			if !ok {
 				return fmt.Errorf("fail cast")
 			}
-			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), entry.Device.Name(), p.Type, entry.Len)
-			log.Debugdump(entry.Data, entry.Len)
-			p.Handler(entry.Data, entry.Len, entry.Device)
+			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), entry.Device.Name(), p.Type, len(entry.Data))
+			log.Debugdump(entry.Data)
+			p.Handler(entry.Data, entry.Device)
 		}
 	}
 	return nil

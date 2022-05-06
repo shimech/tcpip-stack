@@ -1,4 +1,4 @@
-package byte
+package byteops
 
 const (
 	BIG_ENDIAN    = 4321
