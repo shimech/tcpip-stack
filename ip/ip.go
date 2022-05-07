@@ -1,6 +1,8 @@
 package ip
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"strconv"
@@ -12,35 +14,35 @@ import (
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
-type Address [4]uint8
+type Address [IPV4_SIZE]byte
 
 type Header struct {
-	vhl      uint8
-	tos      uint8
-	total    uint16
-	id       uint16
-	offset   uint16
-	ttl      uint8
-	protocol uint8
-	sum      uint16
-	src      Address
-	dst      Address
-	options  []uint8
+	VHL            uint8
+	TypeOfService  uint8
+	TotalLength    uint16
+	ID             uint16
+	FragmentOffset uint16
+	TTL            uint8
+	Protocol       uint8
+	Sum            uint16
+	Src            Address
+	Dst            Address
 }
 
 const (
+	IPV4_SIZE             = 4
 	IP_VERSION_IPV4 uint8 = 4
 
 	IP_HDR_SIZE_MIN = 20
 	IP_HDR_SIZE_MAX = 60
 )
 
-func (h *Header) v() uint8 {
-	return (h.vhl & 0xf0) >> 4
+func (h *Header) Version() uint8 {
+	return (h.VHL & 0xf0) >> 4
 }
 
-func (h *Header) ihl() uint8 {
-	return h.vhl & 0x0f
+func (h *Header) IHL() uint8 {
+	return h.VHL & 0x0f
 }
 
 func Init() error {
@@ -51,19 +53,14 @@ func Init() error {
 	return nil
 }
 
-func newHeader(data []uint8) *Header {
-	return &Header{
-		vhl:      data[0],
-		tos:      data[1],
-		total:    uint16(data[2]*16 + data[3]),
-		id:       uint16(data[4]*16 + data[5]),
-		offset:   uint16(data[6]*16 + data[7]),
-		ttl:      data[8],
-		protocol: data[9],
-		sum:      uint16(data[10]*16 + data[11]),
-		src:      Address{data[12], data[13], data[14], data[15]},
-		dst:      Address{data[16], data[17], data[18], data[19]},
-		options:  data[20:]}
+func newHeader(data []byte) (*Header, error) {
+	h := &Header{}
+	buf := bytes.NewBuffer(data)
+	if err := binary.Read(buf, binary.BigEndian, h); err != nil {
+		log.Errorf(err.Error())
+		return nil, err
+	}
+	return h, nil
 }
 
 func addrPtoN(p string) (Address, error) {
@@ -84,22 +81,26 @@ func addrNtoP(n Address) string {
 }
 
 func dump(data []uint8, len int) {
-	h := newHeader(data)
-	v := h.v()
-	hl := h.ihl()
+	h, err := newHeader(data)
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
+	v := h.Version()
+	hl := h.IHL()
 	hlen := hl << 2
-	fmt.Fprintf(os.Stderr, "        vhl: 0x%02x [v: %d, hl: %d (%d)]\n", h.vhl, v, hl, hlen)
-	fmt.Fprintf(os.Stderr, "        tos: 0x%02x\n", h.tos)
-	total := byteops.NtoH16(h.total)
+	fmt.Fprintf(os.Stderr, "        vhl: 0x%02x [v: %d, hl: %d (%d)]\n", h.VHL, v, hl, hlen)
+	fmt.Fprintf(os.Stderr, "        tos: 0x%02x\n", h.TypeOfService)
+	total := byteops.NtoH16(h.TotalLength)
 	fmt.Fprintf(os.Stderr, "      total: %d (payload: %d)\n", total, total-uint16(hlen))
-	fmt.Fprintf(os.Stderr, "         id: %d\n", byteops.NtoH16(h.id))
-	offset := byteops.NtoH16(h.offset)
+	fmt.Fprintf(os.Stderr, "         id: %d\n", byteops.NtoH16(h.ID))
+	offset := byteops.NtoH16(h.FragmentOffset)
 	fmt.Fprintf(os.Stderr, "     offset: 0x%04x [flags=%x, offset=%d]\n", offset, (offset&0xe000)>>13, offset&0x1fff)
-	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.ttl)
-	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.protocol)
-	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.sum))
-	fmt.Fprintf(os.Stderr, "        src: %s\n", addrNtoP(h.src))
-	fmt.Fprintf(os.Stderr, "        dst: %s\n", addrNtoP(h.dst))
+	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.TTL)
+	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.Protocol)
+	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.Sum))
+	fmt.Fprintf(os.Stderr, "        src: %s\n", addrNtoP(h.Src))
+	fmt.Fprintf(os.Stderr, "        dst: %s\n", addrNtoP(h.Dst))
 }
 
 func input(data []byte, d device.Device) {
@@ -109,30 +110,34 @@ func input(data []byte, d device.Device) {
 		return
 	}
 
-	h := newHeader(data)
+	h, err := newHeader(data)
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
 
-	if h.v() != IP_VERSION_IPV4 {
+	if h.Version() != IP_VERSION_IPV4 {
 		log.Errorf("illegal version")
 		return
 	}
 
-	if int(h.ihl()) > size {
+	if int(h.IHL()) > size {
 		log.Errorf("ihl > len")
 		return
 	}
 
-	total := byteops.NtoH16(h.total)
+	total := byteops.NtoH16(h.TotalLength)
 	if int(total) > size {
 		log.Errorf("tl > len")
 		return
 	}
 
-	offset := byteops.NtoH16(h.offset)
+	offset := byteops.NtoH16(h.FragmentOffset)
 	if offset&0x2000 > 0 || offset&0x1fff > 0 {
 		log.Errorf("fragments does not support")
 		return
 	}
 
-	log.Debugf("dev=%s, protocol=%d, total=%d", d.Name(), h.protocol, total)
+	log.Debugf("dev=%s, protocol=%d, total=%d", d.Name(), h.Protocol, total)
 	dump(data, int(total))
 }
