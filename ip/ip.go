@@ -24,7 +24,7 @@ type Header struct {
 	FragmentOffset uint16
 	TTL            uint8
 	Protocol       uint8
-	Sum            uint16
+	CheckSum       uint16
 	Src            Address
 	Dst            Address
 }
@@ -98,7 +98,7 @@ func dump(data []uint8, len int) {
 	fmt.Fprintf(os.Stderr, "     offset: 0x%04x [flags=%x, offset=%d]\n", offset, (offset&0xe000)>>13, offset&0x1fff)
 	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.TTL)
 	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.Protocol)
-	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.Sum))
+	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.CheckSum))
 	fmt.Fprintf(os.Stderr, "        src: %s\n", addrNtoP(h.Src))
 	fmt.Fprintf(os.Stderr, "        dst: %s\n", addrNtoP(h.Dst))
 }
