@@ -64,7 +64,7 @@ func Thread(h *Handler) {
 
 	log.Debugf("start...")
 	raise <- struct{}{}
-	for {
+	for !term {
 		sig := <-sigs
 		switch sig {
 		case syscall.SIGHUP:
@@ -80,9 +80,6 @@ func Thread(h *Handler) {
 					entry.handler(entry.irq, entry.dev)
 				}
 			}
-			break
-		}
-		if term {
 			break
 		}
 	}
