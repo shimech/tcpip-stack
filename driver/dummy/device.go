@@ -3,13 +3,13 @@ package dummy
 import (
 	"os"
 
-	"github.com/shimech/tcpip-stack/net/device"
+	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
 type Device struct {
-	next      *device.Device
+	next      *net.Device
 	index     int
 	name      string
 	dtype     uint16
@@ -29,22 +29,22 @@ const (
 
 func NewDevice() *Device {
 	d := &Device{
-		dtype: device.NET_DEVICE_TYPE_DUMMY,
+		dtype: net.NET_DEVICE_TYPE_DUMMY,
 		mtu:   DUMMY_MTU,
 		hlen:  0,
 		alen:  0,
 	}
-	device.Register(d)
+	net.RegisterDevice(d)
 	intr.RequestIRQ(DUMMY_IRQ, dummyISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
 }
 
-func (d *Device) Next() *device.Device {
+func (d *Device) Next() *net.Device {
 	return d.next
 }
 
-func (d *Device) SetNext(n *device.Device) {
+func (d *Device) SetNext(n *net.Device) {
 	d.next = n
 }
 
@@ -117,6 +117,6 @@ func (d *Device) Transmit(dtype uint16, data []byte, dst any) error {
 }
 
 func dummyISR(irq os.Signal, id any) error {
-	log.Debugf("irq=%d, dev=%s", irq, id.(device.Device).Name())
+	log.Debugf("irq=%d, dev=%s", irq, id.(net.Device).Name())
 	return nil
 }

@@ -1,9 +1,8 @@
-package protocol
+package net
 
 import (
 	"fmt"
 
-	"github.com/shimech/tcpip-stack/net/device"
 	"github.com/shimech/tcpip-stack/util/log"
 	"github.com/shimech/tcpip-stack/util/queue"
 )
@@ -12,12 +11,7 @@ type Protocol struct {
 	Next    *Protocol
 	Type    uint16
 	Queue   *queue.Queue
-	Handler func(data []byte, d device.Device)
-}
-
-type QueueEntry struct {
-	Device device.Device
-	Data   []byte
+	Handler func(data []byte, d Device)
 }
 
 const (
@@ -28,18 +22,7 @@ const (
 
 var protocols *Protocol
 
-func NewQueueEntry(d device.Device, data []byte) *QueueEntry {
-	return &QueueEntry{
-		Device: d,
-		Data:   data,
-	}
-}
-
-func Head() *Protocol {
-	return protocols
-}
-
-func Register(ptype uint16, handler func(data []byte, d device.Device)) error {
+func RegisterProtocol(ptype uint16, handler func(data []byte, d Device)) error {
 	for p := protocols; p != nil; p = p.Next {
 		if ptype == p.Type {
 			err := fmt.Errorf("already registered, type=0x%04x", ptype)
@@ -52,12 +35,12 @@ func Register(ptype uint16, handler func(data []byte, d device.Device)) error {
 		Queue:   queue.NewQueue(),
 		Handler: handler,
 	}
-	push(p)
+	pushNewProtocol(p)
 	log.Infof("registered, type=0x%04x", ptype)
 	return nil
 }
 
-func push(p *Protocol) {
+func pushNewProtocol(p *Protocol) {
 	p.Next = protocols
 	protocols = p
 }

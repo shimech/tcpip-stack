@@ -8,14 +8,13 @@ import (
 	"syscall"
 
 	"github.com/shimech/tcpip-stack/net"
-	"github.com/shimech/tcpip-stack/net/device"
 	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 	"github.com/shimech/tcpip-stack/util/queue"
 )
 
 type Device struct {
-	next      *device.Device
+	next      *net.Device
 	index     int
 	name      string
 	dtype     uint16
@@ -44,25 +43,25 @@ const (
 
 func NewDevice() *Device {
 	d := &Device{
-		dtype: device.NET_DEVICE_TYPE_LOOPBACK,
+		dtype: net.NET_DEVICE_TYPE_LOOPBACK,
 		mtu:   LOOPBACK_MTU,
 		hlen:  0,
 		alen:  0,
-		flags: device.NET_DEVICE_FLAG_LOOPBACK,
+		flags: net.NET_DEVICE_FLAG_LOOPBACK,
 		irq:   LOOPBACK_IRQ,
 		q:     queue.NewQueue(),
 	}
-	device.Register(d)
+	net.RegisterDevice(d)
 	intr.RequestIRQ(LOOPBACK_IRQ, loopbackISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
 }
 
-func (d *Device) Next() *device.Device {
+func (d *Device) Next() *net.Device {
 	return d.next
 }
 
-func (d *Device) SetNext(n *device.Device) {
+func (d *Device) SetNext(n *net.Device) {
 	d.next = n
 }
 

@@ -3,33 +3,15 @@ package net
 import (
 	"fmt"
 
-	"github.com/shimech/tcpip-stack/ip"
-	"github.com/shimech/tcpip-stack/net/device"
-	"github.com/shimech/tcpip-stack/net/protocol"
 	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
-func Init() error {
-	if err := ip.Init(); err != nil {
-		err := fmt.Errorf("ip.Init() failure")
-		log.Errorf(err.Error())
-		return err
-	}
-	if err := intr.Init(); err != nil {
-		err := fmt.Errorf("intr.Init() failure")
-		log.Errorf(err.Error())
-		return err
-	}
-	log.Infof("initialized")
-	return nil
-}
-
-func InputHandler(ptype uint16, data []byte, d device.Device) error {
-	for p := protocol.Head(); p != nil; p = p.Next {
+func InputHandler(ptype uint16, data []byte, d Device) error {
+	for p := protocols; p != nil; p = p.Next {
 		if uint16(p.Type) == ptype {
-			pqe := protocol.NewQueueEntry(d, data)
-			p.Queue.Push(pqe)
+			e := NewQueueEntry(d, data)
+			p.Queue.Push(e)
 			log.Debugf("queue pushed (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), d.Name(), ptype, len(data))
 			log.Debugdump(data)
 			intr.RaiseIRQ(intr.INTR_IRQ_SOFTIRQ)
@@ -40,19 +22,19 @@ func InputHandler(ptype uint16, data []byte, d device.Device) error {
 }
 
 func SoftIRQHandler() error {
-	for p := protocol.Head(); p != nil; p = p.Next {
+	for p := protocols; p != nil; p = p.Next {
 		for {
-			e := p.Queue.Pop()
-			if e == nil {
+			x := p.Queue.Pop()
+			if x == nil {
 				break
 			}
-			entry, ok := e.(*protocol.QueueEntry)
+			e, ok := x.(*QueueEntry)
 			if !ok {
 				return fmt.Errorf("fail cast")
 			}
-			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), entry.Device.Name(), p.Type, len(entry.Data))
-			log.Debugdump(entry.Data)
-			p.Handler(entry.Data, entry.Device)
+			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), e.Device.Name(), p.Type, len(e.Data))
+			log.Debugdump(e.Data)
+			p.Handler(e.Data, e.Device)
 		}
 	}
 	return nil
@@ -68,8 +50,8 @@ func Run() error {
 		return err
 	}
 	log.Debugf("open all devices...")
-	for d := device.Head(); d != nil; d = (*d).Next() {
-		if err := device.Open(*d); err != nil {
+	for d := devices; d != nil; d = (*d).Next() {
+		if err := OpenDevice(*d); err != nil {
 			return err
 		}
 	}
@@ -77,10 +59,34 @@ func Run() error {
 	return nil
 }
 
+func Output(d Device, dtype uint16, data []byte, dst any) error {
+	size := len(data)
+	if isDeviceUP(d) == 0 {
+		err := fmt.Errorf("not opened, dev=%s", d.Name())
+		log.Errorf(err.Error())
+		return err
+	}
+
+	if size > int(d.MTU()) {
+		err := fmt.Errorf("too long, dev=%s, mtu=%x, len=%d", d.Name(), d.MTU(), size)
+		log.Errorf(err.Error())
+		return err
+	}
+
+	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), dtype, size)
+	log.Debugdump(data)
+	if err := d.Transmit(dtype, data, dst); err != nil {
+		err := fmt.Errorf("device transmit failure, dev=%s, len=%d", d.Name(), size)
+		log.Errorf(err.Error())
+		return err
+	}
+	return nil
+}
+
 func Shutdown() error {
 	log.Debugf("close all devices...")
-	for d := device.Head(); d != nil; d = (*d).Next() {
-		if err := device.Close(*d); err != nil {
+	for d := devices; d != nil; d = (*d).Next() {
+		if err := CloseDevice(*d); err != nil {
 			return err
 		}
 	}

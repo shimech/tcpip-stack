@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shimech/tcpip-stack/net/device"
-	"github.com/shimech/tcpip-stack/net/protocol"
+	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/util/byteops"
 	"github.com/shimech/tcpip-stack/util/checksum"
 	"github.com/shimech/tcpip-stack/util/log"
@@ -20,14 +19,14 @@ const (
 )
 
 func Init() error {
-	if err := protocol.Register(protocol.NET_PROTOCOL_TYPE_IP, input); err != nil {
+	if err := net.RegisterProtocol(net.NET_PROTOCOL_TYPE_IP, input); err != nil {
 		err := fmt.Errorf("protocol.Register() failure")
 		return err
 	}
 	return nil
 }
 
-func input(data []byte, d device.Device) {
+func input(data []byte, d net.Device) {
 	size := len(data)
 	if size < IP_HDR_SIZE_MIN {
 		log.Errorf("too short")

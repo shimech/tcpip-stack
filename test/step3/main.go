@@ -8,21 +8,19 @@ import (
 
 	"github.com/shimech/tcpip-stack/driver/loopback"
 	"github.com/shimech/tcpip-stack/net"
-	"github.com/shimech/tcpip-stack/net/device"
 	"github.com/shimech/tcpip-stack/test"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
-func main() {
-	if err := net.Init(); err != nil {
-		log.Errorf("net.Init() failure")
-		return
-	}
+func init() {
+	test.Init()
+}
 
+func main() {
 	d := loopback.NewDevice()
 
 	if err := net.Run(); err != nil {
-		log.Errorf("device.Run() failure")
+		log.Errorf("net.Run() failure")
 		return
 	}
 
@@ -31,8 +29,8 @@ func main() {
 
 	go func() {
 		for {
-			if err := device.Output(d, 0x0800, test.TestData, nil); err != nil {
-				log.Errorf("device.Output() failure")
+			if err := net.Output(d, 0x0800, test.TestData, nil); err != nil {
+				log.Errorf("net.Output() failure")
 				break
 			}
 			time.Sleep(1 * time.Second)

@@ -1,4 +1,4 @@
-package device
+package net
 
 import (
 	"fmt"
@@ -39,21 +39,21 @@ const (
 var devices *Device
 var index = 0
 
-func Head() *Device {
+func HeadDevice() *Device {
 	return devices
 }
 
-func Register(d Device) {
+func RegisterDevice(d Device) {
 	d.SetIndex(index)
 	d.SetName(fmt.Sprintf("net%d", d.Index()))
-	push(d)
+	pushNewDevice(d)
 	log.Infof("registered, dev=%s, type=0x%04x", d.Name(), d.Type())
 
 	index += 1
 }
 
-func Open(d Device) error {
-	if isUP(d) > 0 {
+func OpenDevice(d Device) error {
+	if isDeviceUP(d) > 0 {
 		err := fmt.Errorf("already opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -66,12 +66,12 @@ func Open(d Device) error {
 	}
 
 	d.SetFlags(d.Flags() | NET_DEVICE_FLAG_UP)
-	log.Infof("dev=%s, state=%s", d.Name(), state(d))
+	log.Infof("dev=%s, state=%s", d.Name(), deviceState(d))
 	return nil
 }
 
-func Close(d Device) error {
-	if isUP(d) == 0 {
+func CloseDevice(d Device) error {
+	if isDeviceUP(d) == 0 {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -84,47 +84,23 @@ func Close(d Device) error {
 	}
 
 	d.SetFlags(d.Flags() & ^NET_DEVICE_FLAG_UP)
-	log.Infof("dev=%s, state=%s", d.Name(), state(d))
+	log.Infof("dev=%s, state=%s", d.Name(), deviceState(d))
 	return nil
 }
 
-func Output(d Device, dtype uint16, data []byte, dst any) error {
-	size := len(data)
-	if isUP(d) == 0 {
-		err := fmt.Errorf("not opened, dev=%s", d.Name())
-		log.Errorf(err.Error())
-		return err
-	}
-
-	if size > int(d.MTU()) {
-		err := fmt.Errorf("too long, dev=%s, mtu=%x, len=%d", d.Name(), d.MTU(), size)
-		log.Errorf(err.Error())
-		return err
-	}
-
-	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), dtype, size)
-	log.Debugdump(data)
-	if err := d.Transmit(dtype, data, dst); err != nil {
-		err := fmt.Errorf("device transmit failure, dev=%s, len=%d", d.Name(), size)
-		log.Errorf(err.Error())
-		return err
-	}
-	return nil
-}
-
-func isUP(d Device) uint16 {
+func isDeviceUP(d Device) uint16 {
 	return d.Flags() & NET_DEVICE_FLAG_UP
 }
 
-func state(d Device) string {
-	if isUP(d) > 0 {
+func deviceState(d Device) string {
+	if isDeviceUP(d) > 0 {
 		return "up"
 	} else {
 		return "down"
 	}
 }
 
-func push(d Device) {
+func pushNewDevice(d Device) {
 	d.SetNext(devices)
 	devices = &d
 }
