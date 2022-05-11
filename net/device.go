@@ -52,7 +52,7 @@ func RegisterDevice(d Device) {
 	index += 1
 }
 
-func OpenDevice(d Device) error {
+func openDevice(d Device) error {
 	if isDeviceUP(d) > 0 {
 		err := fmt.Errorf("already opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
@@ -70,7 +70,7 @@ func OpenDevice(d Device) error {
 	return nil
 }
 
-func CloseDevice(d Device) error {
+func closeDevice(d Device) error {
 	if isDeviceUP(d) == 0 {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())

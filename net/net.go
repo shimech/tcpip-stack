@@ -51,7 +51,7 @@ func Run() error {
 	}
 	log.Debugf("open all devices...")
 	for d := devices; d != nil; d = (*d).Next() {
-		if err := OpenDevice(*d); err != nil {
+		if err := openDevice(*d); err != nil {
 			return err
 		}
 	}
@@ -86,7 +86,7 @@ func Output(d Device, dtype uint16, data []byte, dst any) error {
 func Shutdown() error {
 	log.Debugf("close all devices...")
 	for d := devices; d != nil; d = (*d).Next() {
-		if err := CloseDevice(*d); err != nil {
+		if err := closeDevice(*d); err != nil {
 			return err
 		}
 	}
