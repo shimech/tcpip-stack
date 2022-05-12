@@ -19,21 +19,23 @@ const (
 	INTR_IRQ_SOFTIRQ = syscall.SIGUSR1
 )
 
-var irqs *IRQEntry
-var sigs = make(chan os.Signal, 1)
-var raise = make(chan struct{}, 1)
-var terminate = make(chan struct{}, 1)
+var (
+	irqs      []*IRQEntry
+	sigs      = make(chan os.Signal, 1)
+	raise     = make(chan struct{}, 1)
+	terminate = make(chan struct{}, 1)
+)
 
 func RequestIRQ(
 	irq os.Signal,
-	handler func(irq os.Signal, dev any) error,
+	handler func(irq os.Signal, device any) error,
 	flags int,
 	name string,
-	dev any) error {
+	device any) error {
 	log.Debugf("irq=%d, flags=%d, name=%s", irq, flags, name)
-	for entry := irqs; entry != nil; entry = entry.next {
-		if entry.irq == irq {
-			if entry.flags^INTR_IRQ_SHARED != 0 || flags^INTR_IRQ_SHARED != 0 {
+	for _, e := range irqs {
+		if e.irq == irq {
+			if e.flags^INTR_IRQ_SHARED != 0 || flags^INTR_IRQ_SHARED != 0 {
 				err := fmt.Errorf("conflicts with already registered IRQs")
 				log.Errorf(err.Error())
 				return err
@@ -41,15 +43,14 @@ func RequestIRQ(
 		}
 	}
 
-	entry := &IRQEntry{
-		next:    irqs,
+	e := &IRQEntry{
 		irq:     irq,
 		handler: handler,
 		flags:   flags,
 		name:    name,
-		dev:     dev,
+		device:  device,
 	}
-	irqs = entry
+	irqs = append([]*IRQEntry{e}, irqs...)
 	signal.Notify(sigs, irq)
 	log.Debugf("registered: irq=%d, name=%s", irq, name)
 	return nil
@@ -74,10 +75,10 @@ func Thread(h *Handler) {
 			h.SoftIRQ()
 			break
 		default:
-			for entry := irqs; entry != nil; entry = entry.next {
-				if entry.irq == sig {
-					log.Debugf("irq=%d, name=%s", entry.irq, entry.name)
-					entry.handler(entry.irq, entry.dev)
+			for _, e := range irqs {
+				if e.irq == sig {
+					log.Debugf("irq=%d, name=%s", e.irq, e.name)
+					e.handler(e.irq, e.device)
 				}
 			}
 			break

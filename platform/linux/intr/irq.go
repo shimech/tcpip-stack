@@ -5,10 +5,9 @@ import (
 )
 
 type IRQEntry struct {
-	next    *IRQEntry
 	irq     os.Signal
-	handler func(irq os.Signal, dev any) error
+	handler func(irq os.Signal, device any) error
 	flags   int
 	name    string
-	dev     any
+	device  any
 }
