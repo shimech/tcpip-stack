@@ -31,8 +31,8 @@ func (a *Address) string() string {
 
 func networkAddress(address Address, mask Address) Address {
 	b := Address{}
-	for j := 0; j < len(b); j++ {
-		b[j] = address[j] & mask[j]
+	for i := 0; i < len(b); i++ {
+		b[i] = address[i] & mask[i]
 	}
 	return b
 }
