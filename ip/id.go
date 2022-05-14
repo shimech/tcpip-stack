@@ -9,8 +9,8 @@ var (
 
 func generateID() uint16 {
 	idmu.Lock()
+	defer idmu.Unlock()
 	ret := id
 	id += 1
-	defer idmu.Unlock()
 	return ret
 }
