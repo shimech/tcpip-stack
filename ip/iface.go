@@ -63,7 +63,7 @@ func RegisterIface(d net.Device, i *Iface) error {
 		return err
 	}
 	ifaces = append([]*Iface{i}, ifaces...)
-	log.Infof("registered: dev=%s, unicast=%s, netmask=%s, broadcast=%s", d.Name(), i.unicast.string(), i.netmask.string(), i.broadcast.string())
+	log.Infof("registered: dev=%s, unicast=%s, netmask=%s, broadcast=%s", d.Name(), i.unicast.String(), i.netmask.String(), i.broadcast.String())
 	return nil
 }
 

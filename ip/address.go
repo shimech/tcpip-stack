@@ -25,7 +25,7 @@ func ParseAddress(s string) (Address, error) {
 	return a, nil
 }
 
-func (a *Address) string() string {
+func (a *Address) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", a[0], a[1], a[2], a[3])
 }
 

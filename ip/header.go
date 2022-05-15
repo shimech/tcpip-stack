@@ -14,7 +14,7 @@ type Header struct {
 	ID             uint16
 	FragmentOffset uint16
 	TTL            uint8
-	Protocol       uint8
+	Protocol       ProtocolType
 	Checksum       uint16
 	Src            Address
 	Dst            Address

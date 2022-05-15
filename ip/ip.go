@@ -38,13 +38,18 @@ func input(data []byte, d net.Device) {
 		log.Errorf(err.Error())
 		return
 	}
+	hlen := h.ihl() << 2
 
+	dg := &Datagram{
+		Header: *h,
+		Data:   data[hlen:],
+	}
 	if h.version() != IP_VERSION_IPV4 {
 		log.Errorf("illegal version")
 		return
 	}
 
-	if int(h.ihl()) > len {
+	if int(hlen) > len {
 		log.Errorf("ihl > size")
 		return
 	}
@@ -77,11 +82,23 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	log.Debugf("dev=%s, iface=%s, protocol=%d, total=%d", d.Name(), i.unicast.string(), h.Protocol, tl)
-	dump(data)
+	log.Debugf("dev=%s, iface=%s, protocol=%d, total=%d", d.Name(), i.unicast.String(), h.Protocol, tl)
+	b, err := dg.encode()
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
+	dump(b)
+
+	for _, p := range protocols {
+		if p.Type == h.Protocol {
+			p.Handler(dg.Data, dg.Src, dg.Dst, i)
+			return
+		}
+	}
 }
 
-func Output(protocol byte, data []byte, src Address, dst Address) error {
+func Output(protocol ProtocolType, data []byte, src Address, dst Address) error {
 	len := len(data)
 	if src == IP_ADDR_ANY {
 		return fmt.Errorf("ip routing does not implement")
@@ -107,7 +124,7 @@ func Output(protocol byte, data []byte, src Address, dst Address) error {
 	return nil
 }
 
-func outputCore(i *Iface, protocol uint8, data []byte, src Address, dst Address, id uint16, offset uint16) error {
+func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst Address, id uint16, offset uint16) error {
 	len := len(data)
 	hlen := IP_HDR_SIZE_MIN
 	tl := hlen + len
@@ -131,7 +148,7 @@ func outputCore(i *Iface, protocol uint8, data []byte, src Address, dst Address,
 		return err
 	}
 	d.Checksum = checksum.Cksum16(hb, hlen, 0)
-	log.Debugf("dev=%s, dst=%s, protocol=%d, len=%d", i.device.Name(), dst.string(), protocol, tl)
+	log.Debugf("dev=%s, dst=%s, protocol=%d, len=%d", i.device.Name(), dst.String(), protocol, tl)
 	db, err := d.encode()
 	if err != nil {
 		return err
@@ -172,6 +189,7 @@ func dump(data []byte) {
 	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.TTL)
 	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.Protocol)
 	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.Checksum))
-	fmt.Fprintf(os.Stderr, "        src: %s\n", h.Src.string())
-	fmt.Fprintf(os.Stderr, "        dst: %s\n", h.Dst.string())
+	fmt.Fprintf(os.Stderr, "        src: %s\n", h.Src.String())
+	fmt.Fprintf(os.Stderr, "        dst: %s\n", h.Dst.String())
+	log.Debugdump(data[hlen:])
 }

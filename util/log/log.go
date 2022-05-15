@@ -85,8 +85,8 @@ func hexdump(fp *os.File, data []byte) {
 		}
 		fmt.Fprintf(fp, "| ")
 		for index := 0; index < 16; index++ {
-			d := data[offset+index]
 			if offset+index < len {
+				d := data[offset+index]
 				if utf8string.NewString(string(d)).IsASCII() && unicode.IsPrint(rune(d)) {
 					fmt.Fprintf(fp, "%c", data[offset+index])
 				} else {
