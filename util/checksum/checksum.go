@@ -4,7 +4,8 @@ import (
 	"encoding/binary"
 )
 
-func Cksum16(data []byte, len int, init uint32) uint16 {
+func Cksum16(data []byte, init uint32) uint16 {
+	len := len(data)
 	sum := init
 	var count int
 	for count = len; count > 1; count -= 2 {

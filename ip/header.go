@@ -20,7 +20,12 @@ type Header struct {
 	Dst            Address
 }
 
-func newHeader(data []byte) (*Header, error) {
+const (
+	IP_HEADER_SIZE_MIN = 20
+	IP_HEADER_SIZE_MAX = 60
+)
+
+func decodeHeader(data []byte) (*Header, error) {
 	h := &Header{}
 	buf := bytes.NewBuffer(data)
 	if err := binary.Read(buf, binary.BigEndian, h); err != nil {
@@ -36,6 +41,10 @@ func (h *Header) version() uint8 {
 
 func (h *Header) ihl() uint8 {
 	return h.VHL & 0x0f
+}
+
+func (h *Header) len() int {
+	return int(h.ihl() << 2)
 }
 
 func (h *Header) encode() ([]byte, error) {

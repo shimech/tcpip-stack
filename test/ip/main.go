@@ -45,7 +45,7 @@ func main() {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGINT)
 
-	payload := test.TestData[ip.IP_HDR_SIZE_MIN:]
+	payload := test.TestData[ip.IP_HEADER_SIZE_MIN:]
 	go func() {
 		for {
 			if err := ip.Output(1, payload, src, dst); err != nil {

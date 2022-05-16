@@ -2,7 +2,6 @@ package ip
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/util/byteops"
@@ -13,9 +12,6 @@ import (
 const (
 	IPV4_SIZE             = 4
 	IP_VERSION_IPV4 uint8 = 4
-
-	IP_HDR_SIZE_MIN = 20
-	IP_HDR_SIZE_MAX = 60
 )
 
 func Init() error {
@@ -28,12 +24,12 @@ func Init() error {
 
 func input(data []byte, d net.Device) {
 	len := len(data)
-	if len < IP_HDR_SIZE_MIN {
+	if len < IP_HEADER_SIZE_MIN {
 		log.Errorf("too short")
 		return
 	}
 
-	h, err := newHeader(data)
+	h, err := decodeHeader(data)
 	if err != nil {
 		log.Errorf(err.Error())
 		return
@@ -60,7 +56,7 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	if checksum.Cksum16(data, len, 0) != 0 {
+	if checksum.Cksum16(data, 0) != 0 {
 		log.Errorf("checksum error")
 		return
 	}
@@ -111,8 +107,8 @@ func Output(protocol ProtocolType, data []byte, src Address, dst Address) error 
 	if n != networkAddress(dst, i.netmask) && n != IP_ADDR_BROADCAST {
 		return fmt.Errorf("illegal destination address")
 	}
-	if int(i.device.MTU()) < IP_HDR_SIZE_MIN+len {
-		err := fmt.Errorf("too long, dev=%s, mtu=%d < %d", i.device.Name(), i.device.MTU(), IP_HDR_SIZE_MIN+len)
+	if int(i.device.MTU()) < IP_HEADER_SIZE_MIN+len {
+		err := fmt.Errorf("too long, dev=%s, mtu=%d < %d", i.device.Name(), i.device.MTU(), IP_HEADER_SIZE_MIN+len)
 		log.Errorf(err.Error())
 		return err
 	}
@@ -126,7 +122,7 @@ func Output(protocol ProtocolType, data []byte, src Address, dst Address) error 
 
 func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst Address, id uint16, offset uint16) error {
 	len := len(data)
-	hlen := IP_HDR_SIZE_MIN
+	hlen := IP_HEADER_SIZE_MIN
 	tl := hlen + len
 	d := &Datagram{
 		Header: Header{
@@ -147,7 +143,7 @@ func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst A
 	if err != nil {
 		return err
 	}
-	d.Checksum = checksum.Cksum16(hb, hlen, 0)
+	d.Checksum = checksum.Cksum16(hb, 0)
 	log.Debugf("dev=%s, dst=%s, protocol=%d, len=%d", i.device.Name(), dst.String(), protocol, tl)
 	db, err := d.encode()
 	if err != nil {
@@ -168,28 +164,4 @@ func outputDevice(i *Iface, data []byte, dst Address) error {
 		}
 	}
 	return net.Output(i.device, net.NET_PROTOCOL_TYPE_IP, data, hwaddr)
-}
-
-func dump(data []byte) {
-	h, err := newHeader(data)
-	if err != nil {
-		log.Errorf(err.Error())
-		return
-	}
-	v := h.version()
-	ihl := h.ihl()
-	hlen := ihl << 2
-	fmt.Fprintf(os.Stderr, "        vhl: 0x%02x [v: %d, hl: %d (%d)]\n", h.VHL, v, ihl, hlen)
-	fmt.Fprintf(os.Stderr, "        tos: 0x%02x\n", h.TypeOfService)
-	tl := byteops.NtoH16(h.TotalLength)
-	fmt.Fprintf(os.Stderr, "      total: %d (payload: %d)\n", tl, tl-uint16(hlen))
-	fmt.Fprintf(os.Stderr, "         id: %d\n", byteops.NtoH16(h.ID))
-	fo := byteops.NtoH16(h.FragmentOffset)
-	fmt.Fprintf(os.Stderr, "     offset: 0x%04x [flags=%x, offset=%d]\n", fo, (fo&0xe000)>>13, fo&0x1fff)
-	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.TTL)
-	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.Protocol)
-	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.Checksum))
-	fmt.Fprintf(os.Stderr, "        src: %s\n", h.Src.String())
-	fmt.Fprintf(os.Stderr, "        dst: %s\n", h.Dst.String())
-	log.Debugdump(data[hlen:])
 }
