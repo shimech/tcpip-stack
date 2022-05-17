@@ -70,10 +70,8 @@ func Thread(h *Handler) {
 		switch sig {
 		case syscall.SIGHUP:
 			term = true
-			break
 		case syscall.SIGUSR1:
 			h.SoftIRQ()
-			break
 		default:
 			for _, e := range irqs {
 				if e.irq == sig {
@@ -81,7 +79,6 @@ func Thread(h *Handler) {
 					e.handler(e.irq, e.device)
 				}
 			}
-			break
 		}
 	}
 

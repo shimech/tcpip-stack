@@ -20,13 +20,13 @@ func HtoN16(h uint16) uint16 {
 }
 
 func NtoH32(n uint32) uint32 {
-	b := make([]byte, 2)
+	b := make([]byte, 4)
 	endian.PutUint32(b, n)
 	return endian.Uint32(b)
 }
 
 func HtoN32(h uint32) uint32 {
-	b := make([]byte, 2)
+	b := make([]byte, 4)
 	endian.PutUint32(b, h)
 	return endian.Uint32(b)
 }

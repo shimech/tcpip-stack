@@ -30,4 +30,37 @@ func input(data []byte, src ip.Address, dst ip.Address, i *ip.Iface) {
 	}
 	log.Debugf("%s => %s, len=%d", src.String(), dst.String(), len(data))
 	dump(data)
+
+	switch h.Type {
+	case ICMP_TYPE_ECHO:
+		if err := Output(ICMP_TYPE_ECHOREPLY, h.Code, h.Value, data, i.Unicast, src); err != nil {
+			log.Errorf(err.Error())
+			return
+		}
+	}
+}
+
+func Output(icmpType Type, code uint8, value uint32, data []byte, src ip.Address, dst ip.Address) error {
+	h := &Header{
+		Type:     icmpType,
+		Code:     code,
+		Checksum: 0,
+		Value:    value,
+	}
+	d := &Datagram[Header]{
+		Header: h,
+		Data:   data,
+	}
+	b, err := d.encode()
+	if err != nil {
+		return err
+	}
+	d.Header.Checksum = checksum.Cksum16(b, 0)
+	b, err = d.encode()
+	if err != nil {
+		return err
+	}
+	log.Debugf("%s => %s, len=%d", src.String(), dst.String(), len(b))
+	dump(b)
+	return ip.Output(ip.IP_PROTOCOL_ICMP, b, src, dst)
 }

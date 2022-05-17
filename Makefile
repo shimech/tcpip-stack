@@ -56,8 +56,12 @@ step8:
 
 .PHONY: step9
 step9:
-	@docker compose exec tcpip-stack go run test/icmp/main.go
+	@docker compose exec tcpip-stack go run test/ip/main.go
 
 .PHONY: step10
 step10:
+	@docker compose exec tcpip-stack go run test/ip/main.go
+
+.PHONY: step11
+step11:
 	@docker compose exec tcpip-stack go run test/icmp/main.go

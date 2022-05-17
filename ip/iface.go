@@ -8,9 +8,9 @@ import (
 type Iface struct {
 	device    net.Device
 	family    net.IfaceFamily
-	unicast   Address
-	netmask   Address
-	broadcast Address
+	Unicast   Address
+	Newmask   Address
+	Broadcast Address
 }
 
 var ifaces []*Iface
@@ -28,11 +28,11 @@ func (i *Iface) Family() net.IfaceFamily {
 }
 
 func (i *Iface) calcBroadcast() {
-	n := networkAddress(i.unicast, i.netmask)
+	n := networkAddress(i.Unicast, i.Newmask)
 	for j := 0; j < len(n); j++ {
-		n[j] |= ^i.netmask[j]
+		n[j] |= ^i.Newmask[j]
 	}
-	i.broadcast = n
+	i.Broadcast = n
 }
 
 func NewIface(unicast string, netmask string) (*Iface, error) {
@@ -44,13 +44,13 @@ func NewIface(unicast string, netmask string) (*Iface, error) {
 	if err != nil {
 		return i, err
 	}
-	i.unicast = u
+	i.Unicast = u
 
 	n, err := ParseAddress(netmask)
 	if err != nil {
 		return i, err
 	}
-	i.netmask = n
+	i.Newmask = n
 
 	i.calcBroadcast()
 
@@ -63,13 +63,13 @@ func RegisterIface(d net.Device, i *Iface) error {
 		return err
 	}
 	ifaces = append([]*Iface{i}, ifaces...)
-	log.Infof("registered: dev=%s, unicast=%s, netmask=%s, broadcast=%s", d.Name(), i.unicast.String(), i.netmask.String(), i.broadcast.String())
+	log.Infof("registered: dev=%s, unicast=%s, netmask=%s, broadcast=%s", d.Name(), i.Unicast.String(), i.Newmask.String(), i.Broadcast.String())
 	return nil
 }
 
 func SelectIface(a Address) *Iface {
 	for _, i := range ifaces {
-		if i.unicast == a {
+		if i.Unicast == a {
 			return i
 		}
 	}

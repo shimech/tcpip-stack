@@ -56,7 +56,12 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	if checksum.Cksum16(data, 0) != 0 {
+	b, err := dg.Header.encode()
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
+	if checksum.Cksum16(b, 0) != 0 {
 		log.Errorf("checksum error")
 		return
 	}
@@ -73,13 +78,13 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	if h.Dst != i.unicast && h.Dst != i.broadcast && h.Dst != IP_ADDR_BROADCAST {
+	if h.Dst != i.Unicast && h.Dst != i.Broadcast && h.Dst != IP_ADDR_BROADCAST {
 		log.Errorf("fort other host")
 		return
 	}
 
-	log.Debugf("dev=%s, iface=%s, protocol=%d, total=%d", d.Name(), i.unicast.String(), h.Protocol, tl)
-	b, err := dg.encode()
+	log.Debugf("dev=%s, iface=%s, protocol=%d, total=%d", d.Name(), i.Unicast.String(), h.Protocol, tl)
+	b, err = dg.encode()
 	if err != nil {
 		log.Errorf(err.Error())
 		return
@@ -103,8 +108,8 @@ func Output(protocol ProtocolType, data []byte, src Address, dst Address) error 
 	if i == nil {
 		return fmt.Errorf("interface is not found")
 	}
-	n := networkAddress(i.unicast, i.netmask)
-	if n != networkAddress(dst, i.netmask) && n != IP_ADDR_BROADCAST {
+	n := networkAddress(i.Unicast, i.Newmask)
+	if n != networkAddress(dst, i.Newmask) && n != IP_ADDR_BROADCAST {
 		return fmt.Errorf("illegal destination address")
 	}
 	if int(i.device.MTU()) < IP_HEADER_SIZE_MIN+len {
@@ -143,7 +148,7 @@ func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst A
 	if err != nil {
 		return err
 	}
-	d.Checksum = checksum.Cksum16(hb, 0)
+	d.Header.Checksum = checksum.Cksum16(hb, 0)
 	log.Debugf("dev=%s, dst=%s, protocol=%d, len=%d", i.device.Name(), dst.String(), protocol, tl)
 	db, err := d.encode()
 	if err != nil {
@@ -156,7 +161,7 @@ func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst A
 func outputDevice(i *Iface, data []byte, dst Address) error {
 	var hwaddr uint8
 	if (i.device.Flags() & net.NET_DEVICE_FLAG_NEED_ARP) > 0 {
-		if dst == i.broadcast || dst == IP_ADDR_BROADCAST {
+		if dst == i.Broadcast || dst == IP_ADDR_BROADCAST {
 			hwaddr = i.device.Broadcast()
 		} else {
 			err := fmt.Errorf("arp does not implement")
