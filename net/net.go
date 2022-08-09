@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 
+	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util"
 )
 
@@ -85,6 +86,11 @@ func InputHandler(d Device, type_ uint16, data []uint8, len int) error {
 }
 
 func Run() error {
+	if err := intr.Run(); err != nil {
+		err := fmt.Errorf("intr.Run() failure")
+		util.Errorf(err.Error())
+		return err
+	}
 	util.Debugf("open all devices...")
 	for d := devices; d != nil; d = (*d).Next() {
 		if err := Open(*d); err != nil {
@@ -102,11 +108,17 @@ func Shutdown() error {
 			return err
 		}
 	}
+	intr.Shutdown()
 	util.Debugf("shutting down")
 	return nil
 }
 
 func Init() error {
+	if err := intr.Init(); err != nil {
+		err := fmt.Errorf("intr.Init() failure")
+		util.Errorf(err.Error())
+		return err
+	}
 	util.Infof("initialized")
 	return nil
 }

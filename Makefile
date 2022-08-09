@@ -25,3 +25,7 @@ step0:
 .PHONY: step1
 step1:
 	@docker compose exec tcpip-stack go run test/step1/main.go
+
+.PHONY: step2
+step2:
+	@docker compose exec tcpip-stack go run test/step2/main.go

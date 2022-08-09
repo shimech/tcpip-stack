@@ -1,13 +1,17 @@
 package driver
 
 import (
+	"os"
+
 	"github.com/shimech/tcpip-stack/net"
+	"github.com/shimech/tcpip-stack/platform/linux/intr"
 	"github.com/shimech/tcpip-stack/util"
 )
 
 const (
 	NET_DEVICE_TYPE_DUMMY = 0x0000
 	DUMMY_MTU             = 0xffff
+	DUMMY_IRQ             = intr.INTR_IRQ_BASE
 )
 
 type DummyDevice struct {
@@ -35,6 +39,7 @@ func NewDummyDevice() *DummyDevice {
 		alen:  0,
 	}
 	net.Register(dd)
+	intr.RequestIRQ(DUMMY_IRQ, DummyISR, intr.INTR_IRQ_SHARED, dd.Name(), dd)
 	util.Debugf("initialized, dev=%s", dd.name)
 	return dd
 }
@@ -123,5 +128,11 @@ func (dd *DummyDevice) Transmit(type_ uint16, data []uint8, len int, dst *any) e
 	util.Debugf("dev=%s, type=0x%04x, len=%d", dd.name, type_, len)
 	util.Debugdump(data, len)
 	// drop data
+	intr.RaiseIRQ(DUMMY_IRQ)
+	return nil
+}
+
+func DummyISR(irq os.Signal, id any) error {
+	util.Debugf("irq=%u, dev=%s", irq, id.(net.Device).Name())
 	return nil
 }
