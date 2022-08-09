@@ -15,7 +15,8 @@ const (
 )
 
 var irqs *IRQEntry
-var sigmask = make(chan os.Signal)
+var sigs = make(chan os.Signal)
+var terminate = make(chan bool)
 
 func RequestIRQ(
 	irq os.Signal,
@@ -43,24 +44,24 @@ func RequestIRQ(
 		dev:     dev,
 	}
 	irqs = entry
-	signal.Notify(sigmask, irq)
+	signal.Notify(sigs, irq)
 	util.Debugf("registered: irq=%d, name=%s", irq, name)
 	return nil
 }
 
 func RaiseIRQ(irq os.Signal) {
-	sigmask <- irq
+	sigs <- irq
 }
 
 func Thread() {
-	terminate := false
+	term := false
 
 	util.Debugf("start...")
 	for {
-		sig := <-sigmask
+		sig := <-sigs
 		switch sig {
 		case syscall.SIGHUP:
-			terminate = true
+			term = true
 			break
 		default:
 			for entry := irqs; entry != nil; entry = entry.next {
@@ -71,12 +72,13 @@ func Thread() {
 			}
 			break
 		}
-		if terminate {
+		if term {
 			break
 		}
 	}
 
 	util.Debugf("terminated")
+	terminate <- term
 }
 
 func Run() error {
@@ -85,10 +87,11 @@ func Run() error {
 }
 
 func Shutdown() {
-	sigmask <- syscall.SIGHUP
+	sigs <- syscall.SIGHUP
+	<-terminate
 }
 
 func Init() error {
-	signal.Notify(sigmask, syscall.SIGHUP)
+	signal.Notify(sigs, syscall.SIGHUP)
 	return nil
 }
