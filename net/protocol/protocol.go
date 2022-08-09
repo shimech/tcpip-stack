@@ -16,9 +16,9 @@ type Protocol struct {
 }
 
 type QueueEntry struct {
-	d    *device.Device
-	len  int
-	data []uint8
+	Device device.Device
+	Len    int
+	Data   []uint8
 }
 
 const (
@@ -29,11 +29,11 @@ const (
 
 var protocols *Protocol
 
-func NewQueueEntry(d *device.Device, len int, data []uint8) *QueueEntry {
+func NewQueueEntry(d device.Device, len int, data []uint8) *QueueEntry {
 	return &QueueEntry{
-		d:    d,
-		len:  len,
-		data: data,
+		Device: d,
+		Len:    len,
+		Data:   data,
 	}
 }
 

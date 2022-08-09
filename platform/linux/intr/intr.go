@@ -9,13 +9,18 @@ import (
 	"github.com/shimech/tcpip-stack/util/log"
 )
 
+type Handler struct {
+	SoftIRQ func() error
+}
+
 const (
-	INTR_IRQ_SHARED = 0x0001
-	INTR_IRQ_BASE   = syscall.Signal(0x22) + 1
+	INTR_IRQ_SHARED  = 0x0001
+	INTR_IRQ_BASE    = syscall.Signal(0x22) + 1
+	INTR_IRQ_SOFTIRQ = syscall.SIGUSR1
 )
 
 var irqs *IRQEntry
-var sigs = make(chan os.Signal)
+var sigs = make(chan os.Signal, 1)
 var raise = make(chan struct{}, 1)
 var terminate = make(chan struct{}, 1)
 
@@ -54,7 +59,7 @@ func RaiseIRQ(irq os.Signal) {
 	sigs <- irq
 }
 
-func Thread() {
+func Thread(h *Handler) {
 	term := false
 
 	log.Debugf("start...")
@@ -64,6 +69,9 @@ func Thread() {
 		switch sig {
 		case syscall.SIGHUP:
 			term = true
+			break
+		case syscall.SIGUSR1:
+			h.SoftIRQ()
 			break
 		default:
 			for entry := irqs; entry != nil; entry = entry.next {
@@ -83,8 +91,8 @@ func Thread() {
 	terminate <- struct{}{}
 }
 
-func Run() error {
-	go Thread()
+func Run(h *Handler) error {
+	go Thread(h)
 	<-raise
 	return nil
 }
@@ -95,6 +103,6 @@ func Shutdown() {
 }
 
 func Init() error {
-	signal.Notify(sigs, syscall.SIGHUP)
+	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGUSR1)
 	return nil
 }

@@ -78,7 +78,7 @@ func Close(d Device) error {
 	}
 
 	if err := d.Close(); err != nil {
-		err := fmt.Errorf("failurem dev=%s", d.Name())
+		err := fmt.Errorf("failure dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
 	}

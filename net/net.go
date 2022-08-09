@@ -28,18 +28,40 @@ func Init() error {
 func InputHandler(ptype uint16, data []uint8, len int, d device.Device) error {
 	for p := protocol.Head(); p != nil; p = p.Next {
 		if uint16(p.Type) == ptype {
-			pqe := protocol.NewQueueEntry(&d, len, data)
+			pqe := protocol.NewQueueEntry(d, len, data)
 			p.Queue.Push(pqe)
 			log.Debugf("queue pushed (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), d.Name(), ptype, len)
 			log.Debugdump(data, len)
+			intr.RaiseIRQ(intr.INTR_IRQ_SOFTIRQ)
 			return nil
 		}
 	}
 	return nil
 }
 
+func SoftIRQHandler() error {
+	for p := protocol.Head(); p != nil; p = p.Next {
+		for {
+			e := p.Queue.Pop()
+			if e == nil {
+				break
+			}
+			entry, ok := e.(*protocol.QueueEntry)
+			if !ok {
+				return fmt.Errorf("fail cast")
+			}
+			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), entry.Device.Name(), p.Type, entry.Len)
+			log.Debugdump(entry.Data, entry.Len)
+		}
+	}
+	return nil
+}
+
 func Run() error {
-	if err := intr.Run(); err != nil {
+	h := &intr.Handler{
+		SoftIRQ: SoftIRQHandler,
+	}
+	if err := intr.Run(h); err != nil {
 		err := fmt.Errorf("intr.Run() failure")
 		log.Errorf(err.Error())
 		return err
