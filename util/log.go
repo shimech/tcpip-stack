@@ -10,6 +10,24 @@ import (
 	"golang.org/x/exp/utf8string"
 )
 
+func Errorf(format string, ap ...any) (int, error) {
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		return 0, fmt.Errorf("runtime error")
+	}
+	function := runtime.FuncForPC(pc)
+	return lprintf(os.Stderr, 'E', file, line, function.Name(), format, ap...)
+}
+
+func Infof(format string, ap ...any) (int, error) {
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		return 0, fmt.Errorf("runtime error")
+	}
+	function := runtime.FuncForPC(pc)
+	return lprintf(os.Stderr, 'I', file, line, function.Name(), format, ap...)
+}
+
 func Debugf(format string, ap ...any) (int, error) {
 	pc, file, line, ok := runtime.Caller(1)
 	if !ok {

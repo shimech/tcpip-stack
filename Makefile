@@ -22,3 +22,6 @@ status:
 step0:
 	@docker compose exec tcpip-stack go run test/step0/main.go
 
+.PHONY: step1
+step1:
+	@docker compose exec tcpip-stack go run test/step1/main.go
