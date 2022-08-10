@@ -1,32 +1,24 @@
 package byteops
 
-const (
-	BIG_ENDIAN    = 4321
-	LITTLE_ENDIAN = 1234
+import (
+	"encoding/binary"
+	"unsafe"
 )
 
-var endian int
+var endian = byteorder()
 
 func NtoH16(n uint16) uint16 {
-	if endian == 0 {
-		endian = byteorder()
-	}
-
-	if endian == LITTLE_ENDIAN {
-		n = byteswap16(n)
-	}
-	return n
+	b := make([]byte, 2)
+	endian.PutUint16(b, n)
+	return endian.Uint16(b)
 }
 
-func byteorder() int {
-	x := [4]uint8{0x00, 0x00, 0x00, 0x01}
-	if x[0] == 0 {
-		return BIG_ENDIAN
+func byteorder() binary.ByteOrder {
+	x := 0x0001
+	ptr := unsafe.Pointer(&x)
+	if *(*byte)(ptr) == 0x00 {
+		return binary.BigEndian
 	} else {
-		return LITTLE_ENDIAN
+		return binary.LittleEndian
 	}
-}
-
-func byteswap16(v uint16) uint16 {
-	return (v&0x00ff)<<8 | (v&0xff00)>>8
 }

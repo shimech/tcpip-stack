@@ -9,5 +9,7 @@
   "editor.formatOnSave": true,
   "go.formatTool": "goimports",
   "go.useLanguageServer": true,
-  "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
+  "go.toolsEnvVars": {
+    "GOOS": "linux"
+  }
 }

@@ -1,13 +1,19 @@
 package checksum
 
-func Cksum16(addr []uint16, count uint16, init uint32) uint16 {
+import (
+	"encoding/binary"
+)
+
+func Cksum16(data []byte, init uint32) uint16 {
+	size := len(data)
 	sum := init
-	for count > 1 {
-		sum += uint32(addr[0] + 1)
-		count -= 2
+	var count int
+	for count = size; count > 1; count -= 2 {
+		d := data[size-count : size-count+2]
+		sum += uint32(binary.BigEndian.Uint16(d))
 	}
 	if count > 0 {
-		sum += uint32(addr[0])
+		sum += uint32(data[size-count])
 	}
 	for sum>>16 > 0 {
 		sum = (sum & 0xffff) + sum>>16

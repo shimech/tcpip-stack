@@ -3,6 +3,8 @@ version: "3"
 services:
   tcpip-stack:
     build: .
+    environment:
+      TZ: Asia/Tokyo
     volumes:
       - .:/usr/src/app
     tty: true
