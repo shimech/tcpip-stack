@@ -20,7 +20,7 @@ const (
 
 func Init() error {
 	if err := net.RegisterProtocol(net.NET_PROTOCOL_TYPE_IP, input); err != nil {
-		err := fmt.Errorf("protocol.Register() failure")
+		err := fmt.Errorf("net.RegisterProtocol() failure")
 		return err
 	}
 	return nil
