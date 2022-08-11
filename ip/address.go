@@ -8,10 +8,12 @@ import (
 
 type Address [IPV4_SIZE]byte
 
+var IP_ADDR_BROADCAST = Address{0xff, 0xff, 0xff, 0xff}
+
 func newAddress(s string) (Address, error) {
 	var a Address
 	for i, part := range strings.Split(s, ".") {
-		p, err := strconv.ParseUint(part, 16, 8)
+		p, err := strconv.ParseUint(part, 10, 8)
 		if err != nil {
 			return a, err
 		}

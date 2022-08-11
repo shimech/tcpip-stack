@@ -66,12 +66,18 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	// i := net.GetIfaceInDevice(d, net.NET_IFACE_FAMILY_IP)
-	// if i == nil {
-	// 	return
-	// }
+	i, ok := net.GetIfaceInDevice(d, net.NET_IFACE_FAMILY_IP).(*Iface)
+	if !ok || i == nil {
+		log.Errorf("interface is not found")
+		return
+	}
 
-	log.Debugf("dev=%s, protocol=%d, total=%d", d.Name(), h.Protocol, tl)
+	if h.Dst != i.unicast && h.Dst != i.broadcast && h.Dst != IP_ADDR_BROADCAST {
+		log.Errorf("fort other host")
+		return
+	}
+
+	log.Debugf("dev=%s, iface=%s, protocol=%d, total=%d", d.Name(), i.unicast.string(), h.Protocol, tl)
 	dump(data, int(tl))
 }
 
