@@ -66,6 +66,11 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
+	// i := net.GetIfaceInDevice(d, net.NET_IFACE_FAMILY_IP)
+	// if i == nil {
+	// 	return
+	// }
+
 	log.Debugf("dev=%s, protocol=%d, total=%d", d.Name(), h.Protocol, tl)
 	dump(data, int(tl))
 }

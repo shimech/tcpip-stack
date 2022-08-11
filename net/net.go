@@ -8,7 +8,7 @@ import (
 )
 
 func InputHandler(ptype uint16, data []byte, d Device) error {
-	for p := protocols; p != nil; p = p.Next {
+	for _, p := range protocols {
 		if uint16(p.Type) == ptype {
 			e := NewQueueEntry(d, data)
 			p.Queue.Push(e)
@@ -22,7 +22,7 @@ func InputHandler(ptype uint16, data []byte, d Device) error {
 }
 
 func SoftIRQHandler() error {
-	for p := protocols; p != nil; p = p.Next {
+	for _, p := range protocols {
 		for {
 			x := p.Queue.Pop()
 			if x == nil {
@@ -50,8 +50,9 @@ func Run() error {
 		return err
 	}
 	log.Debugf("open all devices...")
-	for d := devices; d != nil; d = (*d).Next() {
-		if err := openDevice(*d); err != nil {
+
+	for _, d := range devices {
+		if err := openDevice(d); err != nil {
 			return err
 		}
 	}
@@ -61,7 +62,7 @@ func Run() error {
 
 func Output(d Device, dtype uint16, data []byte, dst any) error {
 	size := len(data)
-	if isDeviceUP(d) == 0 {
+	if !isDeviceUP(d) {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -85,8 +86,9 @@ func Output(d Device, dtype uint16, data []byte, dst any) error {
 
 func Shutdown() error {
 	log.Debugf("close all devices...")
-	for d := devices; d != nil; d = (*d).Next() {
-		if err := closeDevice(*d); err != nil {
+
+	for _, d := range devices {
+		if err := closeDevice(d); err != nil {
 			return err
 		}
 	}

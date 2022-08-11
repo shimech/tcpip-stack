@@ -9,7 +9,6 @@ import (
 )
 
 type Device struct {
-	next      *net.Device
 	index     int
 	name      string
 	dtype     uint16
@@ -20,6 +19,7 @@ type Device struct {
 	addr      uint8
 	peer      uint8
 	broadcast uint8
+	ifaces    []net.Iface
 }
 
 const (
@@ -38,14 +38,6 @@ func NewDevice() *Device {
 	intr.RequestIRQ(DUMMY_IRQ, dummyISR, intr.INTR_IRQ_SHARED, d.name, d)
 	log.Debugf("initialized, dev=%s", d.name)
 	return d
-}
-
-func (d *Device) Next() *net.Device {
-	return d.next
-}
-
-func (d *Device) SetNext(n *net.Device) {
-	d.next = n
 }
 
 func (d *Device) Index() int {
@@ -98,6 +90,14 @@ func (d *Device) Peer() uint8 {
 
 func (d *Device) Broadcast() uint8 {
 	return d.broadcast
+}
+
+func (d *Device) Ifaces() []net.Iface {
+	return d.ifaces
+}
+
+func (d *Device) PrependIface(i net.Iface) {
+	d.ifaces = append([]net.Iface{i}, d.ifaces...)
 }
 
 func (d *Device) Open() error {

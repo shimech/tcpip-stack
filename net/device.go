@@ -7,8 +7,6 @@ import (
 )
 
 type Device interface {
-	Next() *Device
-	SetNext(d *Device)
 	Index() int
 	SetIndex(i int)
 	Name() string
@@ -22,6 +20,8 @@ type Device interface {
 	Addr() uint8
 	Peer() uint8
 	Broadcast() uint8
+	Ifaces() []Iface
+	PrependIface(i Iface)
 	Open() error
 	Close() error
 	Transmit(dtype uint16, data []byte, dst any) error
@@ -36,24 +36,22 @@ const (
 	NET_DEVICE_FLAG_LOOPBACK = 0x0010
 )
 
-var devices *Device
-var index = 0
-
-func HeadDevice() *Device {
-	return devices
-}
+var (
+	devices []Device
+	index   = 0
+)
 
 func RegisterDevice(d Device) {
 	d.SetIndex(index)
 	d.SetName(fmt.Sprintf("net%d", d.Index()))
-	pushNewDevice(d)
+	devices = append([]Device{d}, devices...)
 	log.Infof("registered, dev=%s, type=0x%04x", d.Name(), d.Type())
 
 	index += 1
 }
 
 func openDevice(d Device) error {
-	if isDeviceUP(d) > 0 {
+	if isDeviceUP(d) {
 		err := fmt.Errorf("already opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -71,7 +69,7 @@ func openDevice(d Device) error {
 }
 
 func closeDevice(d Device) error {
-	if isDeviceUP(d) == 0 {
+	if !isDeviceUP(d) {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
@@ -88,19 +86,14 @@ func closeDevice(d Device) error {
 	return nil
 }
 
-func isDeviceUP(d Device) uint16 {
-	return d.Flags() & NET_DEVICE_FLAG_UP
+func isDeviceUP(d Device) bool {
+	return d.Flags()&NET_DEVICE_FLAG_UP > 0
 }
 
 func deviceState(d Device) string {
-	if isDeviceUP(d) > 0 {
+	if isDeviceUP(d) {
 		return "up"
 	} else {
 		return "down"
 	}
-}
-
-func pushNewDevice(d Device) {
-	d.SetNext(devices)
-	devices = &d
 }
