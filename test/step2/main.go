@@ -29,7 +29,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := net.Output(d, 0x0800, test.TestData, nil); err != nil {
+			if err := net.Output(d, 0x0800, test.TestData, len(test.TestData), nil); err != nil {
 				log.Errorf("net.Output() failure")
 				break
 			}

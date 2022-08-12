@@ -110,7 +110,7 @@ func (d *Device) Close() error {
 
 func (d *Device) Transmit(dtype uint16, data []byte, dst any) error {
 	log.Debugf("dev=%s, type=0x%04x, len=%d", d.name, dtype, len(data))
-	log.Debugdump(data)
+	log.Debugdump(data, len(data))
 	// drop data
 	intr.RaiseIRQ(DUMMY_IRQ)
 	return nil

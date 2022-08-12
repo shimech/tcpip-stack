@@ -28,12 +28,11 @@ func (i *Iface) Family() net.IfaceFamily {
 }
 
 func (i *Iface) calcBroadcast() {
-	b := Address{}
-	for j := 0; j < len(b); j++ {
-		n := i.unicast[j] & i.netmask[j]
-		b[j] = n | ^i.netmask[j]
+	n := networkAddress(i.unicast, i.netmask)
+	for j := 0; j < len(n); j++ {
+		n[j] |= ^i.netmask[j]
 	}
-	i.broadcast = b
+	i.broadcast = n
 }
 
 func NewIface(unicast string, netmask string) (*Iface, error) {
@@ -41,13 +40,13 @@ func NewIface(unicast string, netmask string) (*Iface, error) {
 		family: net.NET_IFACE_FAMILY_IP,
 	}
 
-	u, err := newAddress(unicast)
+	u, err := ParseAddress(unicast)
 	if err != nil {
 		return i, err
 	}
 	i.unicast = u
 
-	n, err := newAddress(netmask)
+	n, err := ParseAddress(netmask)
 	if err != nil {
 		return i, err
 	}

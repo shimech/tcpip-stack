@@ -165,7 +165,7 @@ func loopbackISR(irq os.Signal, id any) error {
 		}
 
 		log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", d.q.Size(), d.name, entry.dtype, len(entry.data))
-		log.Debugdump(entry.data)
+		log.Debugdump(entry.data, len(entry.data))
 		net.InputHandler(uint16(entry.dtype), entry.data, d)
 	}
 	return nil

@@ -55,7 +55,7 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	if checksum.Cksum16(data, 0) != 0 {
+	if checksum.Cksum16(data, len(data), 0) != 0 {
 		log.Errorf("checksum error")
 		return
 	}
@@ -78,10 +78,81 @@ func input(data []byte, d net.Device) {
 	}
 
 	log.Debugf("dev=%s, iface=%s, protocol=%d, total=%d", d.Name(), i.unicast.string(), h.Protocol, tl)
-	dump(data, int(tl))
+	dump(data)
 }
 
-func dump(data []uint8, len int) {
+func Output(protocol byte, data []byte, len int, src Address, dst Address) error {
+	if src == IP_ADDR_ANY {
+		return fmt.Errorf("ip routing does not implement")
+	}
+	i := SelectIface(src)
+	if i == nil {
+		return fmt.Errorf("interface is not found")
+	}
+	n := networkAddress(i.unicast, i.netmask)
+	if n != networkAddress(dst, i.netmask) && n != IP_ADDR_BROADCAST {
+		return fmt.Errorf("illegal destination address")
+	}
+	if int(i.device.MTU()) < IP_HDR_SIZE_MIN+len {
+		err := fmt.Errorf("too long, dev=%s, mtu=%d < %d", i.device.Name(), i.device.MTU(), IP_HDR_SIZE_MIN+len)
+		log.Errorf(err.Error())
+		return err
+	}
+	id := generateID()
+	if err := outputCore(i, protocol, data, len, src, dst, id, 0); err != nil {
+		log.Errorf(err.Error())
+		return err
+	}
+	return nil
+}
+
+func outputCore(i *Iface, protocol uint8, data []byte, len int, src Address, dst Address, id uint16, offset uint16) error {
+	hlen := IP_HDR_SIZE_MIN
+	tl := hlen + len
+	d := &Datagram{
+		Header: Header{
+			VHL:            IP_VERSION_IPV4<<4 | uint8(hlen)>>2,
+			TypeOfService:  0,
+			TotalLength:    byteops.HtoN16(uint16(tl)),
+			ID:             byteops.HtoN16(id),
+			FragmentOffset: byteops.HtoN16(offset),
+			TTL:            255,
+			Protocol:       protocol,
+			Checksum:       0,
+			Src:            src,
+			Dst:            dst,
+		},
+		Data: data,
+	}
+	hb, err := d.Header.encode()
+	if err != nil {
+		return err
+	}
+	d.Checksum = checksum.Cksum16(hb, hlen, 0)
+	log.Debugf("dev=%s, dst=%s, protocol=%d, len=%d", i.device.Name(), dst.string(), protocol, tl)
+	db, err := d.encode()
+	if err != nil {
+		return err
+	}
+	dump(db)
+	return outputDevice(i, db, tl, dst)
+}
+
+func outputDevice(i *Iface, data []byte, len int, dst Address) error {
+	var hwaddr uint8
+	if (i.device.Flags() & net.NET_DEVICE_FLAG_NEED_ARP) > 0 {
+		if dst == i.broadcast || dst == IP_ADDR_BROADCAST {
+			hwaddr = i.device.Broadcast()
+		} else {
+			err := fmt.Errorf("arp does not implement")
+			return err
+		}
+	}
+
+	return net.Output(i.device, net.NET_PROTOCOL_TYPE_IP, data, len, hwaddr)
+}
+
+func dump(data []byte) {
 	h, err := newHeader(data)
 	if err != nil {
 		log.Errorf(err.Error())
@@ -99,7 +170,7 @@ func dump(data []uint8, len int) {
 	fmt.Fprintf(os.Stderr, "     offset: 0x%04x [flags=%x, offset=%d]\n", fo, (fo&0xe000)>>13, fo&0x1fff)
 	fmt.Fprintf(os.Stderr, "        ttl: %d\n", h.TTL)
 	fmt.Fprintf(os.Stderr, "   protocol: %d\n", h.Protocol)
-	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.CheckSum))
+	fmt.Fprintf(os.Stderr, "        sum: 0x%04x\n", byteops.NtoH16(h.Checksum))
 	fmt.Fprintf(os.Stderr, "        src: %s\n", h.Src.string())
 	fmt.Fprintf(os.Stderr, "        dst: %s\n", h.Dst.string())
 }

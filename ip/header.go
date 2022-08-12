@@ -15,7 +15,7 @@ type Header struct {
 	FragmentOffset uint16
 	TTL            uint8
 	Protocol       uint8
-	CheckSum       uint16
+	Checksum       uint16
 	Src            Address
 	Dst            Address
 }
@@ -36,4 +36,12 @@ func (h *Header) version() uint8 {
 
 func (h *Header) ihl() uint8 {
 	return h.VHL & 0x0f
+}
+
+func (h *Header) encode() ([]byte, error) {
+	var buf bytes.Buffer
+	if err := binary.Write(&buf, binary.BigEndian, h); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
