@@ -78,7 +78,7 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	if h.Dst != i.Unicast && h.Dst != i.Broadcast && h.Dst != IP_ADDR_BROADCAST {
+	if h.Dst != i.Unicast && h.Dst != i.Broadcast && h.Dst != IP_ADDRESS_BROADCAST {
 		log.Errorf("fort other host")
 		return
 	}
@@ -101,7 +101,7 @@ func input(data []byte, d net.Device) {
 
 func Output(protocol ProtocolType, data []byte, src Address, dst Address) error {
 	len := len(data)
-	if src == IP_ADDR_ANY {
+	if src == IP_ADDRESS_ANY {
 		return fmt.Errorf("ip routing does not implement")
 	}
 	i := SelectIface(src)
@@ -109,7 +109,7 @@ func Output(protocol ProtocolType, data []byte, src Address, dst Address) error 
 		return fmt.Errorf("interface is not found")
 	}
 	n := networkAddress(i.Unicast, i.Newmask)
-	if n != networkAddress(dst, i.Newmask) && n != IP_ADDR_BROADCAST {
+	if n != networkAddress(dst, i.Newmask) && n != IP_ADDRESS_BROADCAST {
 		return fmt.Errorf("illegal destination address")
 	}
 	if int(i.device.MTU()) < IP_HEADER_SIZE_MIN+len {
@@ -161,7 +161,7 @@ func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst A
 func outputDevice(i *Iface, data []byte, dst Address) error {
 	var hwaddr uint8
 	if (i.device.Flags() & net.NET_DEVICE_FLAG_NEED_ARP) > 0 {
-		if dst == i.Broadcast || dst == IP_ADDR_BROADCAST {
+		if dst == i.Broadcast || dst == IP_ADDRESS_BROADCAST {
 			hwaddr = i.device.Broadcast()
 		} else {
 			err := fmt.Errorf("arp does not implement")

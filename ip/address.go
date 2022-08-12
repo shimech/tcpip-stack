@@ -9,8 +9,8 @@ import (
 type Address [IPV4_SIZE]byte
 
 var (
-	IP_ADDR_ANY       = Address{0x00, 0x00, 0x00, 0x00}
-	IP_ADDR_BROADCAST = Address{0xff, 0xff, 0xff, 0xff}
+	IP_ADDRESS_ANY       = Address{0x00, 0x00, 0x00, 0x00}
+	IP_ADDRESS_BROADCAST = Address{0xff, 0xff, 0xff, 0xff}
 )
 
 func ParseAddress(s string) (Address, error) {
