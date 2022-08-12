@@ -13,7 +13,7 @@ func InputHandler(ptype uint16, data []byte, d Device) error {
 			e := NewQueueEntry(d, data)
 			p.Queue.Push(e)
 			log.Debugf("queue pushed (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), d.Name(), ptype, len(data))
-			log.Debugdump(data, len(data))
+			log.Debugdump(data)
 			intr.RaiseIRQ(intr.INTR_IRQ_SOFTIRQ)
 			return nil
 		}
@@ -33,7 +33,7 @@ func SoftIRQHandler() error {
 				return fmt.Errorf("fail cast")
 			}
 			log.Debugf("queue popped (num:%d), dev=%s, type=0x%04x, len=%d", p.Queue.Size(), e.Device.Name(), p.Type, len(e.Data))
-			log.Debugdump(e.Data, len(e.Data))
+			log.Debugdump(e.Data)
 			p.Handler(e.Data, e.Device)
 		}
 	}
@@ -60,13 +60,14 @@ func Run() error {
 	return nil
 }
 
-func Output(d Device, dtype uint16, data []byte, len int, dst any) error {
+func Output(d Device, dtype uint16, data []byte, dst any) error {
 	if !isDeviceUP(d) {
 		err := fmt.Errorf("not opened, dev=%s", d.Name())
 		log.Errorf(err.Error())
 		return err
 	}
 
+	len := len(data)
 	if len > int(d.MTU()) {
 		err := fmt.Errorf("too long, dev=%s, mtu=%x, len=%d", d.Name(), d.MTU(), len)
 		log.Errorf(err.Error())
@@ -74,7 +75,7 @@ func Output(d Device, dtype uint16, data []byte, len int, dst any) error {
 	}
 
 	log.Debugf("dev=%s, type=0x%04x, len=%d", d.Name(), dtype, len)
-	log.Debugdump(data, len)
+	log.Debugdump(data)
 	if err := d.Transmit(dtype, data, dst); err != nil {
 		err := fmt.Errorf("device transmit failure, dev=%s, len=%d", d.Name(), len)
 		log.Errorf(err.Error())

@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/shimech/tcpip-stack/driver/loopback"
+	"github.com/shimech/tcpip-stack/driver/dummy"
 	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/test"
 	"github.com/shimech/tcpip-stack/util/log"
@@ -17,7 +17,7 @@ func init() {
 }
 
 func main() {
-	d := loopback.NewDevice()
+	d := dummy.NewDevice()
 
 	if err := net.Run(); err != nil {
 		log.Errorf("net.Run() failure")
@@ -29,7 +29,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := net.Output(d, 0x0800, test.TestData, len(test.TestData), nil); err != nil {
+			if err := net.Output(d, 0x0800, test.TestData, nil); err != nil {
 				log.Errorf("net.Output() failure")
 				break
 			}

@@ -7,5 +7,5 @@ import (
 
 func main() {
 	log.Debugf("Hello, World!")
-	log.Debugdump(test.TestData, len(test.TestData))
+	log.Debugdump(test.TestData)
 }

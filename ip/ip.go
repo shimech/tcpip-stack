@@ -27,8 +27,8 @@ func Init() error {
 }
 
 func input(data []byte, d net.Device) {
-	size := len(data)
-	if size < IP_HDR_SIZE_MIN {
+	len := len(data)
+	if len < IP_HDR_SIZE_MIN {
 		log.Errorf("too short")
 		return
 	}
@@ -44,18 +44,18 @@ func input(data []byte, d net.Device) {
 		return
 	}
 
-	if int(h.ihl()) > size {
+	if int(h.ihl()) > len {
 		log.Errorf("ihl > size")
 		return
 	}
 
 	tl := byteops.NtoH16(h.TotalLength)
-	if int(tl) > size {
+	if int(tl) > len {
 		log.Errorf("total length > size")
 		return
 	}
 
-	if checksum.Cksum16(data, len(data), 0) != 0 {
+	if checksum.Cksum16(data, len, 0) != 0 {
 		log.Errorf("checksum error")
 		return
 	}
@@ -81,7 +81,8 @@ func input(data []byte, d net.Device) {
 	dump(data)
 }
 
-func Output(protocol byte, data []byte, len int, src Address, dst Address) error {
+func Output(protocol byte, data []byte, src Address, dst Address) error {
+	len := len(data)
 	if src == IP_ADDR_ANY {
 		return fmt.Errorf("ip routing does not implement")
 	}
@@ -99,14 +100,15 @@ func Output(protocol byte, data []byte, len int, src Address, dst Address) error
 		return err
 	}
 	id := generateID()
-	if err := outputCore(i, protocol, data, len, src, dst, id, 0); err != nil {
+	if err := outputCore(i, protocol, data, src, dst, id, 0); err != nil {
 		log.Errorf(err.Error())
 		return err
 	}
 	return nil
 }
 
-func outputCore(i *Iface, protocol uint8, data []byte, len int, src Address, dst Address, id uint16, offset uint16) error {
+func outputCore(i *Iface, protocol uint8, data []byte, src Address, dst Address, id uint16, offset uint16) error {
+	len := len(data)
 	hlen := IP_HDR_SIZE_MIN
 	tl := hlen + len
 	d := &Datagram{
@@ -135,10 +137,10 @@ func outputCore(i *Iface, protocol uint8, data []byte, len int, src Address, dst
 		return err
 	}
 	dump(db)
-	return outputDevice(i, db, tl, dst)
+	return outputDevice(i, db, dst)
 }
 
-func outputDevice(i *Iface, data []byte, len int, dst Address) error {
+func outputDevice(i *Iface, data []byte, dst Address) error {
 	var hwaddr uint8
 	if (i.device.Flags() & net.NET_DEVICE_FLAG_NEED_ARP) > 0 {
 		if dst == i.broadcast || dst == IP_ADDR_BROADCAST {
@@ -148,8 +150,7 @@ func outputDevice(i *Iface, data []byte, len int, dst Address) error {
 			return err
 		}
 	}
-
-	return net.Output(i.device, net.NET_PROTOCOL_TYPE_IP, data, len, hwaddr)
+	return net.Output(i.device, net.NET_PROTOCOL_TYPE_IP, data, hwaddr)
 }
 
 func dump(data []byte) {

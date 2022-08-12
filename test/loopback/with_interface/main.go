@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/shimech/tcpip-stack/driver/loopback"
+	"github.com/shimech/tcpip-stack/ip"
 	"github.com/shimech/tcpip-stack/net"
 	"github.com/shimech/tcpip-stack/test"
 	"github.com/shimech/tcpip-stack/util/log"
@@ -19,6 +20,16 @@ func init() {
 func main() {
 	d := loopback.NewDevice()
 
+	i, err := ip.NewIface(test.LOOPBACK_IP_ADDR, test.LOOPBACK_NETMASK)
+	if err != nil {
+		log.Errorf("ip.NewIface() failure")
+		return
+	}
+	if err := ip.RegisterIface(d, i); err != nil {
+		log.Errorf("ip.RegisterIface() failue")
+		return
+	}
+
 	if err := net.Run(); err != nil {
 		log.Errorf("net.Run() failure")
 		return
@@ -29,7 +40,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := net.Output(d, net.NET_PROTOCOL_TYPE_IP, test.TestData, len(test.TestData), nil); err != nil {
+			if err := net.Output(d, net.NET_PROTOCOL_TYPE_IP, test.TestData, nil); err != nil {
 				log.Errorf("net.Output() failure")
 				break
 			}
