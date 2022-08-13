@@ -4,7 +4,21 @@ services:
   tcpip-stack:
     build: .
     environment:
+      USER: root
       TZ: Asia/Tokyo
+    cap_add:
+      - NET_ADMIN
+    privileged: true
     volumes:
       - .:/usr/src/app
     tty: true
+    networks:
+      bridge:
+        ipv4_address: 192.0.0.2
+
+networks:
+  bridge:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.0.0.0/16

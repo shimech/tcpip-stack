@@ -1,3 +1,5 @@
+PRIVATE_IP := 192.0.2.1
+
 .PHONY: build
 build:
 	docker compose build
@@ -10,9 +12,25 @@ start:
 stop:
 	docker compose stop
 
+.PHONY: clean
+clean:
+	docker compose down
+
 .PHONY: attach
 attach:
 	docker compose exec tcpip-stack bash
+
+.PHONY: gen-tap0
+gen-tap0:
+	docker compose exec tcpip-stack ./bin/gen-tap0.sh
+
+.PHONY: show-tap0
+show-tap0:
+	docker compose exec tcpip-stack ip addr show tap0
+
+.PHONY: ping
+ping:
+	docker compose exec tcpip-stack ping ${PRIVATE_IP}
 
 .PHONY: status
 status:
