@@ -159,7 +159,7 @@ func outputCore(i *Iface, protocol ProtocolType, data []byte, src Address, dst A
 }
 
 func outputDevice(i *Iface, data []byte, dst Address) error {
-	var hwaddr uint8
+	var hwaddr net.Address
 	if (i.device.Flags() & net.NET_DEVICE_FLAG_NEED_ARP) > 0 {
 		if dst == i.Broadcast || dst == IP_ADDRESS_BROADCAST {
 			hwaddr = i.device.Broadcast()

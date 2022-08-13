@@ -3,7 +3,7 @@ package net
 import (
 	"fmt"
 
-	"github.com/shimech/tcpip-stack/platform/linux/intr"
+	"github.com/shimech/tcpip-stack/platform/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 

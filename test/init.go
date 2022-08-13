@@ -3,7 +3,7 @@ package test
 import (
 	"github.com/shimech/tcpip-stack/icmp"
 	"github.com/shimech/tcpip-stack/ip"
-	"github.com/shimech/tcpip-stack/platform/linux/intr"
+	"github.com/shimech/tcpip-stack/platform/intr"
 	"github.com/shimech/tcpip-stack/util/log"
 )
 

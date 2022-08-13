@@ -11,15 +11,20 @@ type Device interface {
 	SetIndex(i int)
 	Name() string
 	SetName(n string)
-	Type() uint16
+	Type() DeviceType
+	SetType(t DeviceType)
 	MTU() uint16
-	Flags() uint16
-	SetFlags(f uint16)
+	SetMTU(mtu uint16)
+	Flags() Flag
+	SetFlags(f Flag)
 	Hlen() uint16
+	SetHlen(hlen uint16)
 	Alen() uint16
-	Addr() uint8
-	Peer() uint8
-	Broadcast() uint8
+	SetAlen(alen uint16)
+	Addr() Address
+	Peer() Address
+	Broadcast() Address
+	SetBroadcast(b Address)
 	Ifaces() []Iface
 	PrependIface(i Iface)
 	Open() error
@@ -27,14 +32,20 @@ type Device interface {
 	Transmit(dtype uint16, data []byte, dst any) error
 }
 
+type Flag uint16
+
+type DeviceType uint16
+
 const (
-	NET_DEVICE_FLAG_UP       uint16 = 0x0001
-	NET_DEVICE_FLAG_NEED_ARP uint16 = 0x0100
+	NET_DEVICE_FLAG_UP        Flag = 0x0001
+	NET_DEVICE_FLAG_LOOPBACK  Flag = 0x0010
+	NET_DEVICE_FLAG_BROADCAST Flag = 0x0020
+	NET_DEVICE_FLAG_P2P       Flag = 0x0040
+	NET_DEVICE_FLAG_NEED_ARP  Flag = 0x0100
 
-	NET_DEVICE_TYPE_DUMMY    = 0x0000
-	NET_DEVICE_TYPE_LOOPBACK = 0x0001
-
-	NET_DEVICE_FLAG_LOOPBACK = 0x0010
+	NET_DEVICE_TYPE_DUMMY    DeviceType = 0x0000
+	NET_DEVICE_TYPE_LOOPBACK DeviceType = 0x0001
+	NET_DEVICE_TYPE_ETHERNET DeviceType = 0x0002
 )
 
 var (
